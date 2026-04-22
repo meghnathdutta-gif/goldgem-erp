@@ -120,7 +120,7 @@ interface Warehouse {
 // ============================================
 // CONSTANTS
 // ============================================
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316']
+const COLORS = ['#d97706', '#f59e0b', '#dc2626', '#6366f1', '#06b6d4', '#ec4899', '#94a3b8', '#f97316']
 const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-emerald-100 text-emerald-800', delivered: 'bg-emerald-100 text-emerald-800',
   active: 'bg-emerald-100 text-emerald-800', paid: 'bg-emerald-100 text-emerald-800',
@@ -136,15 +136,16 @@ const PRIORITY_COLORS: Record<string, string> = { low: 'bg-slate-100 text-slate-
 
 const NAV_ITEMS: { key: ModuleKey; label: string; icon: React.ReactNode }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { key: 'inventory', label: 'Inventory', icon: <Package className="h-5 w-5" /> },
+  { key: 'inventory', label: 'Inventory & Vault', icon: <Package className="h-5 w-5" /> },
   { key: 'supply-chain', label: 'Supply Chain', icon: <Truck className="h-5 w-5" /> },
-  { key: 'manufacturing', label: 'Manufacturing', icon: <Factory className="h-5 w-5" /> },
-  { key: 'pos', label: 'Point of Sale', icon: <ShoppingCart className="h-5 w-5" /> },
-  { key: 'ecommerce', label: 'E-Commerce', icon: <Store className="h-5 w-5" /> },
+  { key: 'manufacturing', label: 'Karigarkhana', icon: <Factory className="h-5 w-5" /> },
+  { key: 'pos', label: 'Counter Sale', icon: <ShoppingCart className="h-5 w-5" /> },
+  { key: 'ecommerce', label: 'Online Store', icon: <Store className="h-5 w-5" /> },
   { key: 'ai-insights', label: 'AI Insights', icon: <Brain className="h-5 w-5" /> },
 ]
 
 function formatCurrency(amount: number) {
+  if (amount >= 100000) return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)
 }
 
@@ -198,14 +199,14 @@ export default function ERPApp() {
       {/* Sidebar */}
       <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-slate-900 text-white flex flex-col transition-all duration-300 flex-shrink-0`}>
         <div className="p-4 flex items-center gap-3 border-b border-slate-700">
-          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">E</div>
-          {!sidebarCollapsed && <span className="font-bold text-lg tracking-tight">ERP Pro</span>}
+          <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 text-amber-950">G</div>
+          {!sidebarCollapsed && <span className="font-bold text-lg tracking-tight">Gold<span className="text-amber-400">Gem</span></span>}
         </div>
         <nav className="flex-1 py-4 space-y-1 px-2">
           {NAV_ITEMS.map(item => (
             <button key={item.key} onClick={() => setActiveModule(item.key)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm
-                ${activeModule === item.key ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                ${activeModule === item.key ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
               {item.icon}
               {!sidebarCollapsed && <span>{item.label}</span>}
             </button>
@@ -234,8 +235,8 @@ export default function ERPApp() {
             </Button>
             <Button variant="ghost" size="icon"><Bell className="h-4 w-4" /></Button>
             <div className="flex items-center gap-2 pl-3 border-l">
-              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-medium">A</div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin</span>
+              <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-amber-950 text-sm font-medium">V</div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Vikram</span>
             </div>
           </div>
         </header>
@@ -278,13 +279,13 @@ function DashboardModule() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Revenue', value: formatCurrency(kpis.totalRevenue), icon: <DollarSign className="h-5 w-5" />, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: '+12.5%', up: true },
+          { label: 'Total Revenue', value: formatCurrency(kpis.totalRevenue), icon: <DollarSign className="h-5 w-5" />, color: 'text-amber-600', bg: 'bg-amber-50', trend: '+12.5%', up: true },
           { label: 'Total Orders', value: kpis.totalOrders.toLocaleString(), icon: <BarChart3 className="h-5 w-5" />, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+8.2%', up: true },
-          { label: 'Inventory Value', value: formatCurrency(kpis.inventoryValue), icon: <Package className="h-5 w-5" />, color: 'text-purple-600', bg: 'bg-purple-50', trend: '+3.1%', up: true },
+          { label: 'Vault Value', value: formatCurrency(kpis.inventoryValue), icon: <Package className="h-5 w-5" />, color: 'text-amber-700', bg: 'bg-amber-50', trend: '+3.1%', up: true },
           { label: 'Active Work Orders', value: kpis.activeWorkOrders.toString(), icon: <Factory className="h-5 w-5" />, color: 'text-orange-600', bg: 'bg-orange-50', trend: '-2.4%', up: false },
           { label: 'Pending Shipments', value: kpis.pendingShipments.toString(), icon: <Truck className="h-5 w-5" />, color: 'text-cyan-600', bg: 'bg-cyan-50', trend: '+5.7%', up: true },
           { label: 'Low Stock Alerts', value: kpis.lowStockItems.toString(), icon: <AlertTriangle className="h-5 w-5" />, color: 'text-red-600', bg: 'bg-red-50', trend: `${kpis.lowStockItems} items`, up: false },
-          { label: 'Total Products', value: kpis.totalProducts.toString(), icon: <BoxIcon className="h-5 w-5" />, color: 'text-teal-600', bg: 'bg-teal-50', trend: 'Active', up: true },
+          { label: 'Total Designs', value: kpis.totalProducts.toString(), icon: <BoxIcon className="h-5 w-5" />, color: 'text-teal-600', bg: 'bg-teal-50', trend: 'Active', up: true },
           { label: 'Total Customers', value: kpis.totalCustomers.toString(), icon: <Users className="h-5 w-5" />, color: 'text-pink-600', bg: 'bg-pink-50', trend: '+15.3%', up: true },
         ].map((kpi, i) => (
           <Card key={i} className="hover:shadow-md transition-shadow">
@@ -293,7 +294,7 @@ function DashboardModule() {
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{kpi.label}</p>
                   <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">{kpi.value}</p>
-                  <p className={`text-xs mt-1 flex items-center gap-1 ${kpi.up ? 'text-emerald-600' : 'text-red-500'}`}>
+                  <p className={`text-xs mt-1 flex items-center gap-1 ${kpi.up ? 'text-amber-600' : 'text-red-500'}`}>
                     {kpi.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}{kpi.trend}
                   </p>
                 </div>
@@ -309,23 +310,23 @@ function DashboardModule() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Revenue Overview</CardTitle><CardDescription>Monthly revenue trend</CardDescription></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Revenue Overview</CardTitle><CardDescription>Monthly sales & making charges</CardDescription></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={revenueData}>
-                <defs><linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient></defs>
+                <defs><linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#d97706" stopOpacity={0.3}/><stop offset="95%" stopColor="#d97706" stopOpacity={0}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="name" fontSize={12} />
                 <YAxis fontSize={12} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
                 <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                <Area type="monotone" dataKey="value" stroke="#10b981" fill="url(#colorRevenue)" strokeWidth={2} />
+                <Area type="monotone" dataKey="value" stroke="#d97706" fill="url(#colorRevenue)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Sales by Category</CardTitle><CardDescription>Revenue distribution</CardDescription></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Sales by Category</CardTitle><CardDescription>Revenue by jewellery type</CardDescription></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
@@ -341,7 +342,7 @@ function DashboardModule() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Warehouse Utilization</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Vault & Workshop Utilization</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={data.inventoryByWarehouse}>
@@ -349,7 +350,7 @@ function DashboardModule() {
                 <XAxis dataKey="name" fontSize={12} />
                 <YAxis fontSize={12} />
                 <Tooltip />
-                <Bar dataKey="totalItems" fill="#10b981" radius={[4, 4, 0, 0]} name="Items" />
+                <Bar dataKey="totalItems" fill="#d97706" radius={[4, 4, 0, 0]} name="Items" />
                 <Bar dataKey="capacity" fill="#e5e7eb" radius={[4, 4, 0, 0]} name="Capacity" />
               </BarChart>
             </ResponsiveContainer>
@@ -376,7 +377,7 @@ function DashboardModule() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Top Selling Products</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Top Selling Designs</CardTitle></CardHeader>
           <CardContent>
             <Table>
               <TableHeader><TableRow><TableHead>Product</TableHead><TableHead className="text-right">Qty Sold</TableHead><TableHead className="text-right">Revenue</TableHead></TableRow></TableHeader>
@@ -447,7 +448,7 @@ function InventoryModule() {
           <Select value={filterCategory} onValueChange={setFilterCategory}><SelectTrigger className="w-48"><SelectValue placeholder="All Categories" /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
         </div>
         <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
-          <DialogTrigger asChild><Button className="bg-emerald-600 hover:bg-emerald-700"><PlusIcon className="h-4 w-4 mr-2" />Add Product</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className="bg-amber-600 hover:bg-amber-700"><PlusIcon className="h-4 w-4 mr-2" />Add Product</Button></DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Add New Product</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -460,16 +461,16 @@ function InventoryModule() {
               <div><Label>Category</Label><Select value={newProduct.categoryId} onValueChange={v => setNewProduct(p => ({ ...p, categoryId: v }))}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Min Stock Level</Label><Input type="number" value={newProduct.minStockLevel} onChange={e => setNewProduct(p => ({ ...p, minStockLevel: +e.target.value }))} /></div>
-                <div><Label>Unit</Label><Select value={newProduct.unit} onValueChange={v => setNewProduct(p => ({ ...p, unit: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="piece">Piece</SelectItem><SelectItem value="kg">Kg</SelectItem><SelectItem value="liter">Liter</SelectItem><SelectItem value="meter">Meter</SelectItem></SelectContent></Select></div>
+                <div><Label>Unit</Label><Select value={newProduct.unit} onValueChange={v => setNewProduct(p => ({ ...p, unit: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="piece">Piece</SelectItem><SelectItem value="gram">Gram</SelectItem><SelectItem value="carat">Carat</SelectItem><SelectItem value="meter">Meter</SelectItem></SelectContent></Select></div>
               </div>
-              <Button onClick={handleAddProduct} className="w-full bg-emerald-600 hover:bg-emerald-700">Add Product</Button>
+              <Button onClick={handleAddProduct} className="w-full bg-amber-600 hover:bg-amber-700">Add Product</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList><TabsTrigger value="products">Products</TabsTrigger><TabsTrigger value="warehouses">Warehouses</TabsTrigger><TabsTrigger value="low-stock">Low Stock Alerts</TabsTrigger></TabsList>
+        <TabsList><TabsTrigger value="products">Products & Designs</TabsTrigger><TabsTrigger value="warehouses">Vaults & Workshop</TabsTrigger><TabsTrigger value="low-stock">Low Stock Alerts</TabsTrigger></TabsList>
 
         <TabsContent value="products" className="mt-4">
           <Card><CardContent className="p-0">
@@ -487,7 +488,7 @@ function InventoryModule() {
                       <TableCell className="text-right">{formatCurrency(p.price)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(p.costPrice)}</TableCell>
                       <TableCell className="text-right font-medium">{totalStock}</TableCell>
-                      <TableCell>{isLow ? <Badge className="bg-red-100 text-red-700 border-0"><AlertTriangle className="h-3 w-3 mr-1" />Low</Badge> : <Badge className="bg-emerald-100 text-emerald-700 border-0"><CheckCircle className="h-3 w-3 mr-1" />OK</Badge>}</TableCell>
+                      <TableCell>{isLow ? <Badge className="bg-red-100 text-red-700 border-0"><AlertTriangle className="h-3 w-3 mr-1" />Low</Badge> : <Badge className="bg-amber-100 text-amber-700 border-0"><CheckCircle className="h-3 w-3 mr-1" />OK</Badge>}</TableCell>
                     </TableRow>
                   )
                 })}
@@ -805,12 +806,12 @@ function POSModule() {
               <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" /><Input placeholder="Search products by name or SKU..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" /></div>
               <div className="grid grid-cols-3 gap-3 overflow-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
                 {filteredProducts.slice(0, 30).map(p => (
-                  <Card key={p.id} className="cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all" onClick={() => addToCart(p)}>
+                  <Card key={p.id} className="cursor-pointer hover:shadow-md hover:border-amber-300 transition-all" onClick={() => addToCart(p)}>
                     <CardContent className="p-3">
                       <p className="font-medium text-sm truncate">{p.name}</p>
                       <p className="text-xs text-gray-400">{p.sku}</p>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="font-bold text-emerald-600">{formatCurrency(p.price)}</span>
+                        <span className="font-bold text-amber-600">{formatCurrency(p.price)}</span>
                         <span className="text-xs text-gray-400">Stock: {p.inventoryItems.reduce((s, i) => s + i.quantity, 0)}</span>
                       </div>
                     </CardContent>
@@ -846,13 +847,13 @@ function POSModule() {
                     <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
                     <div className="flex justify-between text-sm"><span>Tax (5%)</span><span>{formatCurrency(taxAmount)}</span></div>
                     {discount > 0 && <div className="flex justify-between text-sm text-red-500"><span>Discount</span><span>-{formatCurrency(discount)}</span></div>}
-                    <div className="flex justify-between text-lg font-bold"><span>Total</span><span className="text-emerald-600">{formatCurrency(totalAmount)}</span></div>
+                    <div className="flex justify-between text-lg font-bold"><span>Total</span><span className="text-amber-600">{formatCurrency(totalAmount)}</span></div>
                   </div>
                   <div className="mt-3 space-y-2">
                     <div><Label className="text-xs">Payment Method</Label>
                       <div className="flex gap-2 mt-1">
                         {[{ key: 'cash', icon: <Banknote className="h-4 w-4" />, label: 'Cash' }, { key: 'card', icon: <CreditCard className="h-4 w-4" />, label: 'Card' }, { key: 'upi', icon: <Smartphone className="h-4 w-4" />, label: 'UPI' }].map(pm => (
-                          <Button key={pm.key} variant={paymentMethod === pm.key ? 'default' : 'outline'} size="sm" onClick={() => setPaymentMethod(pm.key)} className={paymentMethod === pm.key ? 'bg-emerald-600 hover:bg-emerald-700' : ''}>
+                          <Button key={pm.key} variant={paymentMethod === pm.key ? 'default' : 'outline'} size="sm" onClick={() => setPaymentMethod(pm.key)} className={paymentMethod === pm.key ? 'bg-amber-600 hover:bg-amber-700' : ''}>
                             {pm.icon}<span className="ml-1">{pm.label}</span>
                           </Button>
                         ))}
@@ -860,7 +861,7 @@ function POSModule() {
                     </div>
                     <div className="flex gap-2">
                       <Input type="number" placeholder="Discount ₹" value={discount || ''} onChange={e => setDiscount(+e.target.value)} className="flex-1" />
-                      <Button onClick={handleCheckout} className="flex-1 bg-emerald-600 hover:bg-emerald-700" disabled={cart.length === 0}>
+                      <Button onClick={handleCheckout} className="flex-1 bg-amber-600 hover:bg-amber-700" disabled={cart.length === 0}>
                         <ShoppingCart className="h-4 w-4 mr-2" />Checkout
                       </Button>
                     </div>
@@ -894,7 +895,7 @@ function POSModule() {
         <TabsContent value="receipt" className="mt-4">
           {lastReceipt ? (
             <Card className="max-w-md mx-auto">
-              <CardHeader className="text-center pb-2"><CardTitle>ERP Pro</CardTitle><CardDescription>Point of Sale Receipt</CardDescription></CardHeader>
+              <CardHeader className="text-center pb-2"><CardTitle>Gold<span className="text-amber-600">Gem</span></CardTitle><CardDescription>Jewellery · Counter Sale Receipt</CardDescription></CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm"><span>Trx #</span><span className="font-mono">{lastReceipt.transactionNumber}</span></div>
@@ -908,8 +909,8 @@ function POSModule() {
                   <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(lastReceipt.subtotal)}</span></div>
                   <div className="flex justify-between text-sm"><span>Tax</span><span>{formatCurrency(lastReceipt.taxAmount)}</span></div>
                   {lastReceipt.discount > 0 && <div className="flex justify-between text-sm text-red-500"><span>Discount</span><span>-{formatCurrency(lastReceipt.discount)}</span></div>}
-                  <div className="flex justify-between text-lg font-bold"><span>TOTAL</span><span className="text-emerald-600">{formatCurrency(lastReceipt.totalAmount)}</span></div>
-                  <p className="text-center text-xs text-gray-400 mt-4">Thank you for your purchase!</p>
+                  <div className="flex justify-between text-lg font-bold"><span>TOTAL</span><span className="text-amber-600">{formatCurrency(lastReceipt.totalAmount)}</span></div>
+                  <p className="text-center text-xs text-gray-400 mt-4">Thank you for choosing GoldGem!</p>
                 </div>
               </CardContent>
             </Card>
@@ -947,9 +948,9 @@ function EcommerceModule() {
             <div className="w-48 flex-shrink-0">
               <h3 className="font-semibold mb-3 text-sm">Categories</h3>
               <div className="space-y-1">
-                <button onClick={() => setSelectedCategory('all')} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${selectedCategory === 'all' ? 'bg-emerald-100 text-emerald-700 font-medium' : 'hover:bg-gray-100'}`}>All Products</button>
+                <button onClick={() => setSelectedCategory('all')} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${selectedCategory === 'all' ? 'bg-amber-100 text-amber-700 font-medium' : 'hover:bg-gray-100'}`}>All Products</button>
                 {categories.map(c => (
-                  <button key={c.id} onClick={() => setSelectedCategory(c.id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${selectedCategory === c.id ? 'bg-emerald-100 text-emerald-700 font-medium' : 'hover:bg-gray-100'}`}>{c.name}</button>
+                  <button key={c.id} onClick={() => setSelectedCategory(c.id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${selectedCategory === c.id ? 'bg-amber-100 text-amber-700 font-medium' : 'hover:bg-gray-100'}`}>{c.name}</button>
                 ))}
               </div>
             </div>
@@ -965,11 +966,11 @@ function EcommerceModule() {
                       <p className="font-medium text-sm truncate">{p.name}</p>
                       <p className="text-xs text-gray-400">{p.sku}</p>
                       <div className="flex justify-between items-center mt-2">
-                        <span className="font-bold text-emerald-600">{formatCurrency(p.price)}</span>
+                        <span className="font-bold text-amber-600">{formatCurrency(p.price)}</span>
                         <Badge variant="outline" className="text-xs">{p.category?.name}</Badge>
                       </div>
                       <div className="flex gap-2 mt-2">
-                        <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-xs"><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</Button>
+                        <Button size="sm" className="flex-1 bg-amber-600 hover:bg-amber-700 text-xs"><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</Button>
                         <Button size="sm" variant="outline"><Eye className="h-3 w-3" /></Button>
                       </div>
                     </CardContent>
@@ -1047,7 +1048,7 @@ function AIInsightsModule() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-5 w-5 text-emerald-500" />Demand Forecast</CardTitle><CardDescription>AI-predicted demand for next 3 months</CardDescription></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-5 w-5 text-amber-500" />Demand Forecast</CardTitle><CardDescription>AI-predicted demand for next 3 months</CardDescription></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={forecastChartData}>
@@ -1091,9 +1092,9 @@ function AIInsightsModule() {
                   <TableCell className="text-right">{s.currentStock}</TableCell>
                   <TableCell className="text-right">{s.avgDailyDemand}</TableCell>
                   <TableCell className="text-right">{s.reorderPoint}</TableCell>
-                  <TableCell className="text-right font-medium text-emerald-600">{s.suggestedOrderQty}</TableCell>
+                  <TableCell className="text-right font-medium text-amber-600">{s.suggestedOrderQty}</TableCell>
                   <TableCell>
-                    <Badge className={`${s.status === 'critical' ? 'bg-red-100 text-red-700' : s.status === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} border-0 capitalize`}>{s.status}</Badge>
+                    <Badge className={`${s.status === 'critical' ? 'bg-red-100 text-red-700' : s.status === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-amber-100 text-amber-700'} border-0 capitalize`}>{s.status}</Badge>
                   </TableCell>
                 </TableRow>
               ))}

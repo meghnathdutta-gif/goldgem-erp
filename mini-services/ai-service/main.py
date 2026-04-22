@@ -1,11 +1,11 @@
 """
-ERP Pro - AI/ML Microservice
-============================
-FastAPI service providing AI/ML capabilities for the ERP system:
-- Demand Forecasting (Moving Average, Exponential Smoothing)
-- Inventory Optimization (Reorder Point, Safety Stock calculation)
-- Sales Trend Analysis
-- Anomaly Detection
+GoldGem - AI/ML Microservice for Jewellery ERP
+================================================
+FastAPI service providing AI/ML capabilities for GoldGem Jewellery ERP:
+- Demand Forecasting (Moving Average, Exponential Smoothing, Linear Regression)
+- Inventory Optimization (Reorder Point, Safety Stock, EOQ for precious metals)
+- Sales Trend Analysis with wedding/festive seasonality
+- Anomaly Detection for unusual demand patterns
 """
 
 from fastapi import FastAPI, HTTPException
@@ -19,8 +19,8 @@ import json
 import math
 
 app = FastAPI(
-    title="ERP Pro AI Service",
-    description="AI/ML microservice for demand forecasting and inventory optimization",
+    title="GoldGem AI Service",
+    description="AI/ML microservice for GoldGem Jewellery ERP — demand forecasting, vault optimization & gem analytics",
     version="1.0.0"
 )
 
@@ -368,7 +368,7 @@ async def analyze_trend(request: TrendRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": "ERP Pro AI Service", "version": "1.0.0"}
+    return {"status": "healthy", "service": "GoldGem AI Service", "version": "1.0.0"}
 
 if __name__ == "__main__":
     import uvicorn

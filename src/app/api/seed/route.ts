@@ -29,69 +29,74 @@ export async function POST() {
     await db.user.deleteMany()
 
     // Create Users
-    const admin = await db.user.create({ data: { email: 'admin@erppro.com', name: 'Admin User', password: 'hashed_admin', role: 'admin' } })
-    const manager = await db.user.create({ data: { email: 'manager@erppro.com', name: 'Rahul Sharma', password: 'hashed_mgr', role: 'manager' } })
-    const cashier = await db.user.create({ data: { email: 'cashier@erppro.com', name: 'Priya Patel', password: 'hashed_cash', role: 'cashier' } })
-    const staff1 = await db.user.create({ data: { email: 'staff1@erppro.com', name: 'Amit Kumar', password: 'hashed_s1', role: 'staff' } })
-    const staff2 = await db.user.create({ data: { email: 'staff2@erppro.com', name: 'Neha Singh', password: 'hashed_s2', role: 'staff' } })
+    const admin = await db.user.create({ data: { email: 'admin@goldgem.com', name: 'Vikram Mehta', password: 'hashed_admin', role: 'admin' } })
+    const manager = await db.user.create({ data: { email: 'manager@goldgem.com', name: 'Priya Sharma', password: 'hashed_mgr', role: 'manager' } })
+    const cashier = await db.user.create({ data: { email: 'cashier@goldgem.com', name: 'Anita Desai', password: 'hashed_cash', role: 'cashier' } })
+    const staff1 = await db.user.create({ data: { email: 'goldsmith@goldgem.com', name: 'Rajesh Soni', password: 'hashed_s1', role: 'staff' } })
+    const staff2 = await db.user.create({ data: { email: 'setter@goldgem.com', name: 'Mohammed Khan', password: 'hashed_s2', role: 'staff' } })
 
-    // Create Categories
-    const electronics = await db.category.create({ data: { name: 'Electronics', description: 'Electronic devices and components', icon: 'Monitor', color: '#10b981' } })
-    const clothing = await db.category.create({ data: { name: 'Clothing', description: 'Apparel and fashion items', icon: 'Shirt', color: '#8b5cf6' } })
-    const food = await db.category.create({ data: { name: 'Food & Beverages', description: 'Consumable food and drink items', icon: 'Coffee', color: '#f59e0b' } })
-    const furniture = await db.category.create({ data: { name: 'Furniture', description: 'Office and home furniture', icon: 'Armchair', color: '#ef4444' } })
-    const rawMaterials = await db.category.create({ data: { name: 'Raw Materials', description: 'Raw materials for manufacturing', icon: 'Box', color: '#6366f1' } })
+    // Create Jewellery Categories
+    const goldJewellery = await db.category.create({ data: { name: 'Gold Jewellery', description: '22K & 18K gold ornaments — rings, necklaces, bangles, earrings', icon: 'Circle', color: '#d97706' } })
+    const diamondJewellery = await db.category.create({ data: { name: 'Diamond Jewellery', description: 'Solitaire & cluster diamond set jewellery', icon: 'Diamond', color: '#6366f1' } })
+    const silverJewellery = await db.category.create({ data: { name: 'Silver Jewellery', description: 'Sterling silver ornaments and artefacts', icon: 'Hexagon', color: '#94a3b8' } })
+    const platinumJewellery = await db.category.create({ data: { name: 'Platinum Jewellery', description: 'Premium platinum bands and collections', icon: 'Pentagon', color: '#e2e8f0' } })
+    const gemstones = await db.category.create({ data: { name: 'Gemstones', description: 'Precious & semi-precious stones — Ruby, Emerald, Sapphire', icon: 'Gem', color: '#dc2626' } })
+    const rawMaterials = await db.category.create({ data: { name: 'Raw Materials', description: 'Gold bars, silver granules, solder, flux, casting grain', icon: 'Box', color: '#78716c' } })
 
-    // Create Products
+    // Create Products — Jewellery Industry
     const productsData = [
-      // Electronics
-      { name: 'Laptop Pro 15', sku: 'ELEC-LP-001', price: 54999, costPrice: 38000, categoryId: electronics.id, minStockLevel: 20, isManufactured: true, unit: 'piece' },
-      { name: 'Wireless Mouse', sku: 'ELEC-WM-002', price: 899, costPrice: 450, categoryId: electronics.id, minStockLevel: 50, unit: 'piece' },
-      { name: 'USB-C Hub', sku: 'ELEC-UCH-003', price: 2499, costPrice: 1200, categoryId: electronics.id, minStockLevel: 30, unit: 'piece' },
-      { name: 'Mechanical Keyboard', sku: 'ELEC-MK-004', price: 3499, costPrice: 1800, categoryId: electronics.id, minStockLevel: 25, unit: 'piece' },
-      { name: 'Monitor 27"', sku: 'ELEC-MON-005', price: 18999, costPrice: 12000, categoryId: electronics.id, minStockLevel: 15, isManufactured: true, unit: 'piece' },
-      { name: 'Webcam HD', sku: 'ELEC-WC-006', price: 2999, costPrice: 1500, categoryId: electronics.id, minStockLevel: 20, unit: 'piece' },
-      { name: 'RAM 8GB DDR4', sku: 'ELEC-RAM-007', price: 1999, costPrice: 900, categoryId: electronics.id, minStockLevel: 100, unit: 'piece' },
-      { name: 'SSD 256GB', sku: 'ELEC-SSD-008', price: 2999, costPrice: 1400, categoryId: electronics.id, minStockLevel: 80, unit: 'piece' },
-      { name: 'LCD Panel 15"', sku: 'ELEC-LCD-009', price: 4500, costPrice: 2500, categoryId: electronics.id, minStockLevel: 40, unit: 'piece' },
-      { name: 'Power Supply Unit', sku: 'ELEC-PSU-010', price: 3500, costPrice: 1800, categoryId: electronics.id, minStockLevel: 30, unit: 'piece' },
-      // Clothing
-      { name: 'Cotton T-Shirt', sku: 'CLTH-CT-001', price: 599, costPrice: 250, categoryId: clothing.id, minStockLevel: 100, unit: 'piece' },
-      { name: 'Denim Jeans', sku: 'CLTH-DJ-002', price: 1499, costPrice: 700, categoryId: clothing.id, minStockLevel: 60, unit: 'piece' },
-      { name: 'Formal Shirt', sku: 'CLTH-FS-003', price: 1299, costPrice: 550, categoryId: clothing.id, minStockLevel: 50, unit: 'piece' },
-      { name: 'Sports Jacket', sku: 'CLTH-SJ-004', price: 2499, costPrice: 1100, categoryId: clothing.id, minStockLevel: 30, unit: 'piece' },
-      { name: 'Wool Sweater', sku: 'CLTH-WS-005', price: 1899, costPrice: 800, categoryId: clothing.id, minStockLevel: 40, unit: 'piece' },
-      // Food & Beverages
-      { name: 'Organic Coffee 500g', sku: 'FOOD-OC-001', price: 499, costPrice: 280, categoryId: food.id, minStockLevel: 200, unit: 'piece' },
-      { name: 'Green Tea Pack', sku: 'FOOD-GT-002', price: 299, costPrice: 150, categoryId: food.id, minStockLevel: 150, unit: 'piece' },
-      { name: 'Protein Bar (12pk)', sku: 'FOOD-PB-003', price: 899, costPrice: 500, categoryId: food.id, minStockLevel: 80, unit: 'piece' },
-      { name: 'Almond Butter 350g', sku: 'FOOD-AB-004', price: 699, costPrice: 380, categoryId: food.id, minStockLevel: 60, unit: 'piece' },
-      { name: 'Mineral Water 1L (12pk)', sku: 'FOOD-MW-005', price: 399, costPrice: 180, categoryId: food.id, minStockLevel: 300, unit: 'piece' },
-      // Furniture
-      { name: 'Ergonomic Chair', sku: 'FURN-EC-001', price: 12999, costPrice: 7000, categoryId: furniture.id, minStockLevel: 10, isManufactured: true, unit: 'piece' },
-      { name: 'Standing Desk', sku: 'FURN-SD-002', price: 18999, costPrice: 10000, categoryId: furniture.id, minStockLevel: 8, isManufactured: true, unit: 'piece' },
-      { name: 'Bookshelf Oak', sku: 'FURN-BO-003', price: 8999, costPrice: 4500, categoryId: furniture.id, minStockLevel: 12, unit: 'piece' },
-      { name: 'Filing Cabinet', sku: 'FURN-FC-004', price: 4999, costPrice: 2500, categoryId: furniture.id, minStockLevel: 15, unit: 'piece' },
+      // Gold Jewellery
+      { name: '22K Gold Necklace Set', sku: 'GJ-NS-001', price: 125000, costPrice: 98000, categoryId: goldJewellery.id, minStockLevel: 5, isManufactured: true, unit: 'piece' },
+      { name: '22K Gold Bangles (Pair)', sku: 'GJ-BG-002', price: 89000, costPrice: 72000, categoryId: goldJewellery.id, minStockLevel: 8, isManufactured: true, unit: 'piece' },
+      { name: '18K Gold Ring — Solitaire Setting', sku: 'GJ-RG-003', price: 45000, costPrice: 32000, categoryId: goldJewellery.id, minStockLevel: 12, isManufactured: true, unit: 'piece' },
+      { name: '22K Gold Jhumka Earrings', sku: 'GJ-JE-004', price: 35000, costPrice: 25000, categoryId: goldJewellery.id, minStockLevel: 15, isManufactured: true, unit: 'piece' },
+      { name: '22K Gold Mangalsutra', sku: 'GJ-MS-005', price: 55000, costPrice: 42000, categoryId: goldJewellery.id, minStockLevel: 8, isManufactured: true, unit: 'piece' },
+      { name: '22K Gold Chain (20 inch)', sku: 'GJ-CH-006', price: 62000, costPrice: 50000, categoryId: goldJewellery.id, minStockLevel: 10, isManufactured: true, unit: 'piece' },
+      { name: '18K Gold Pendant — Floral', sku: 'GJ-PD-007', price: 28000, costPrice: 19000, categoryId: goldJewellery.id, minStockLevel: 10, unit: 'piece' },
+      { name: '22K Gold Nose Pin', sku: 'GJ-NP-008', price: 12000, costPrice: 8000, categoryId: goldJewellery.id, minStockLevel: 20, unit: 'piece' },
+      { name: '22K Gold Anklet (Payal)', sku: 'GJ-AK-009', price: 42000, costPrice: 33000, categoryId: goldJewellery.id, minStockLevel: 6, isManufactured: true, unit: 'piece' },
+      { name: '22K Gold Maang Tikka', sku: 'GJ-MT-010', price: 18000, costPrice: 13000, categoryId: goldJewellery.id, minStockLevel: 8, unit: 'piece' },
+      // Diamond Jewellery
+      { name: 'Diamond Solitaire Ring (0.5ct)', sku: 'DJ-SR-001', price: 285000, costPrice: 210000, categoryId: diamondJewellery.id, minStockLevel: 3, isManufactured: true, unit: 'piece' },
+      { name: 'Diamond Tennis Bracelet', sku: 'DJ-TB-002', price: 195000, costPrice: 145000, categoryId: diamondJewellery.id, minStockLevel: 4, isManufactured: true, unit: 'piece' },
+      { name: 'Diamond Stud Earrings (0.3ct pair)', sku: 'DJ-SE-003', price: 120000, costPrice: 88000, categoryId: diamondJewellery.id, minStockLevel: 5, isManufactured: true, unit: 'piece' },
+      { name: 'Diamond Pendant Necklace', sku: 'DJ-PN-004', price: 165000, costPrice: 120000, categoryId: diamondJewellery.id, minStockLevel: 4, isManufactured: true, unit: 'piece' },
+      { name: 'Diamond Cluster Ring', sku: 'DJ-CR-005', price: 135000, costPrice: 98000, categoryId: diamondJewellery.id, minStockLevel: 4, isManufactured: true, unit: 'piece' },
+      // Silver Jewellery
+      { name: 'Sterling Silver Cuff Bracelet', sku: 'SJ-CB-001', price: 4500, costPrice: 2200, categoryId: silverJewellery.id, minStockLevel: 25, unit: 'piece' },
+      { name: 'Silver Oxidised Jhumka', sku: 'SJ-OJ-002', price: 2800, costPrice: 1200, categoryId: silverJewellery.id, minStockLevel: 40, unit: 'piece' },
+      { name: 'Silver Toe Rings (Pair)', sku: 'SJ-TR-003', price: 1500, costPrice: 600, categoryId: silverJewellery.id, minStockLevel: 50, unit: 'piece' },
+      { name: 'Silver Pooja Thali Set', sku: 'SJ-PT-004', price: 8500, costPrice: 4800, categoryId: silverJewellery.id, minStockLevel: 10, unit: 'piece' },
+      // Platinum Jewellery
+      { name: 'Platinum Love Band (His)', sku: 'PJ-LB-001', price: 75000, costPrice: 55000, categoryId: platinumJewellery.id, minStockLevel: 5, isManufactured: true, unit: 'piece' },
+      { name: 'Platinum Love Band (Hers)', sku: 'PJ-LB-002', price: 65000, costPrice: 48000, categoryId: platinumJewellery.id, minStockLevel: 5, isManufactured: true, unit: 'piece' },
+      { name: 'Platinum Solitaire Ring', sku: 'PJ-SR-003', price: 320000, costPrice: 240000, categoryId: platinumJewellery.id, minStockLevel: 2, isManufactured: true, unit: 'piece' },
+      // Gemstones
+      { name: 'Natural Ruby (1.2ct)', sku: 'GM-RB-001', price: 95000, costPrice: 65000, categoryId: gemstones.id, minStockLevel: 5, unit: 'piece' },
+      { name: 'Colombian Emerald (1.0ct)', sku: 'GM-EM-002', price: 120000, costPrice: 82000, categoryId: gemstones.id, minStockLevel: 4, unit: 'piece' },
+      { name: 'Blue Sapphire (1.5ct)', sku: 'GM-BS-003', price: 85000, costPrice: 58000, categoryId: gemstones.id, minStockLevel: 5, unit: 'piece' },
+      { name: 'South Sea Pearl (10mm)', sku: 'GM-PP-004', price: 4500, costPrice: 2500, categoryId: gemstones.id, minStockLevel: 30, unit: 'piece' },
+      { name: 'Yellow Sapphire (2.0ct)', sku: 'GM-YS-005', price: 55000, costPrice: 38000, categoryId: gemstones.id, minStockLevel: 5, unit: 'piece' },
       // Raw Materials
-      { name: 'Steel Rod 2m', sku: 'RAW-SR-001', price: 450, costPrice: 280, categoryId: rawMaterials.id, minStockLevel: 500, unit: 'piece' },
-      { name: 'Plywood Sheet 4x8', sku: 'RAW-PS-002', price: 1200, costPrice: 700, categoryId: rawMaterials.id, minStockLevel: 200, unit: 'piece' },
-      { name: 'Copper Wire 100m', sku: 'RAW-CW-003', price: 2500, costPrice: 1500, categoryId: rawMaterials.id, minStockLevel: 100, unit: 'piece' },
-      { name: 'Plastic Granules 1kg', sku: 'RAW-PG-004', price: 120, costPrice: 65, categoryId: rawMaterials.id, minStockLevel: 1000, unit: 'kg' },
-      { name: 'Fabric Roll 10m', sku: 'RAW-FR-005', price: 800, costPrice: 420, categoryId: rawMaterials.id, minStockLevel: 150, unit: 'piece' },
+      { name: '22K Gold Casting Grain (10g)', sku: 'RM-GC-001', price: 62000, costPrice: 58000, categoryId: rawMaterials.id, minStockLevel: 50, unit: 'piece' },
+      { name: '18K Gold Wire (1m)', sku: 'RM-GW-002', price: 4800, costPrice: 3800, categoryId: rawMaterials.id, minStockLevel: 100, unit: 'meter' },
+      { name: 'Silver Granules (100g)', sku: 'RM-SG-003', price: 8500, costPrice: 7200, categoryId: rawMaterials.id, minStockLevel: 30, unit: 'piece' },
+      { name: 'Gold Solder Sheet (5g)', sku: 'RM-GS-004', price: 3200, costPrice: 2500, categoryId: rawMaterials.id, minStockLevel: 80, unit: 'piece' },
+      { name: 'Platinum Casting Grain (5g)', sku: 'RM-PC-005', price: 25000, costPrice: 22000, categoryId: rawMaterials.id, minStockLevel: 20, unit: 'piece' },
     ]
     const products = []
     for (const p of productsData) {
       products.push(await db.product.create({ data: p }))
     }
 
-    // Create Warehouses
-    const wh1 = await db.warehouse.create({ data: { name: 'Main Warehouse', code: 'WH-MAIN', address: 'Industrial Area, Sector 12', city: 'Noida', manager: 'Amit Kumar', capacity: 5000 } })
-    const wh2 = await db.warehouse.create({ data: { name: 'East Depot', code: 'WH-EAST', address: 'Guru Nagar, Road 5', city: 'Delhi', manager: 'Neha Singh', capacity: 3000 } })
-    const wh3 = await db.warehouse.create({ data: { name: 'West Depot', code: 'WH-WEST', address: 'MIDC, Plot 45', city: 'Gurgaon', manager: 'Priya Patel', capacity: 2000 } })
+    // Create Warehouses — Jewellery specific
+    const wh1 = await db.warehouse.create({ data: { name: 'Main Vault', code: 'WH-VAULT', address: 'Zaveri Bazaar, Shop 12', city: 'Mumbai', manager: 'Vikram Mehta', capacity: 500 } })
+    const wh2 = await db.warehouse.create({ data: { name: 'Karigarkhana Workshop', code: 'WH-KARKHANA', address: 'Bhendi Bazaar, Lane 3', city: 'Mumbai', manager: 'Rajesh Soni', capacity: 200 } })
+    const wh3 = await db.warehouse.create({ data: { name: 'Showroom Stock Room', code: 'WH-SHOWROOM', address: 'Linking Road, Bandra', city: 'Mumbai', manager: 'Anita Desai', capacity: 150 } })
 
     // Create Inventory Items
     for (const product of products) {
-      const stockLevels = [Math.floor(Math.random() * 200) + 5, Math.floor(Math.random() * 100) + 2, Math.floor(Math.random() * 50)]
+      const stockLevels = [Math.floor(Math.random() * 15) + 1, Math.floor(Math.random() * 8) + 1, Math.floor(Math.random() * 5) + 1]
       const warehouses = [wh1, wh2, wh3]
       for (let i = 0; i < 3; i++) {
         await db.inventoryItem.create({
@@ -99,22 +104,22 @@ export async function POST() {
             productId: product.id,
             warehouseId: warehouses[i].id,
             quantity: stockLevels[i],
-            reservedQty: Math.floor(stockLevels[i] * 0.1),
+            reservedQty: Math.floor(stockLevels[i] * 0.2),
             reorderPoint: product.minStockLevel,
-            reorderQty: product.minStockLevel * 5,
+            reorderQty: product.minStockLevel * 3,
           }
         })
       }
     }
 
-    // Create Suppliers
+    // Create Suppliers — Jewellery industry
     const suppliers = []
     const suppliersData = [
-      { name: 'TechVista Components', code: 'SUP-TV', email: 'sales@techvista.com', phone: '+91-9876543210', city: 'Bangalore', country: 'India', rating: 4.5, leadTimeDays: 5, paymentTerms: 'Net 30' },
-      { name: 'ShreeRam Industries', code: 'SUP-SR', email: 'info@shreeram.com', phone: '+91-9812345678', city: 'Mumbai', country: 'India', rating: 4.0, leadTimeDays: 7, paymentTerms: 'Net 45' },
-      { name: 'Global Parts Ltd', code: 'SUP-GP', email: 'orders@globalparts.com', phone: '+91-9898765432', city: 'Chennai', country: 'India', rating: 3.8, leadTimeDays: 10, paymentTerms: 'Net 30' },
-      { name: 'FabriCare Materials', code: 'SUP-FC', email: 'supply@fabricare.com', phone: '+91-9765432109', city: 'Surat', country: 'India', rating: 4.2, leadTimeDays: 4, paymentTerms: 'Net 15' },
-      { name: 'WoodCraft Supplies', code: 'SUP-WC', email: 'hello@woodcraft.com', phone: '+91-9654321098', city: 'Jaipur', country: 'India', rating: 3.5, leadTimeDays: 12, paymentTerms: 'Net 60' },
+      { name: 'MMTC-PAMP India', code: 'SUP-MMTC', email: 'bullion@mmtcpamp.com', phone: '+91-22-23456789', city: 'Mumbai', country: 'India', rating: 4.8, leadTimeDays: 3, paymentTerms: 'Advance' },
+      { name: 'Rajesh Exports Ltd', code: 'SUP-REL', email: 'supply@rajeshexports.com', phone: '+91-80-22334455', city: 'Bangalore', country: 'India', rating: 4.5, leadTimeDays: 5, paymentTerms: 'Net 15' },
+      { name: 'Surat Diamond Bureau', code: 'SUP-SDB', email: 'diamonds@sdb.org.in', phone: '+91-261-2345678', city: 'Surat', country: 'India', rating: 4.2, leadTimeDays: 7, paymentTerms: 'Net 30' },
+      { name: 'Gem Palace Jaipur', code: 'SUP-GPJ', email: 'gems@gempalace.com', phone: '+91-141-2345678', city: 'Jaipur', country: 'India', rating: 4.6, leadTimeDays: 4, paymentTerms: 'Net 15' },
+      { name: 'Swiss Refinery AG', code: 'SUP-SRA', email: 'orders@swissrefinery.ch', phone: '+41-44-1234567', city: 'Zurich', country: 'Switzerland', rating: 4.9, leadTimeDays: 14, paymentTerms: 'LC at Sight' },
     ]
     for (const s of suppliersData) {
       suppliers.push(await db.supplier.create({ data: s }))
@@ -128,11 +133,11 @@ export async function POST() {
       const items = []
       for (let j = 0; j < numItems; j++) {
         const product = products[Math.floor(Math.random() * products.length)]
-        const qty = Math.floor(Math.random() * 100) + 10
+        const qty = Math.floor(Math.random() * 20) + 2
         items.push({ productId: product.id, quantity: qty, unitPrice: product.costPrice, totalPrice: product.costPrice * qty, receivedQty: Math.floor(qty * Math.random()) })
       }
       const totalAmount = items.reduce((sum, it) => sum + it.totalPrice, 0)
-      const po = await db.purchaseOrder.create({
+      await db.purchaseOrder.create({
         data: {
           poNumber: `PO-2026-${String(i + 1).padStart(4, '0')}`,
           supplierId: supplier.id,
@@ -140,30 +145,46 @@ export async function POST() {
           orderDate: new Date(2026, Math.floor(Math.random() * 4), Math.floor(Math.random() * 28) + 1),
           expectedDate: new Date(2026, Math.floor(Math.random() * 4) + 1, Math.floor(Math.random() * 28) + 1),
           totalAmount,
-          taxAmount: totalAmount * 0.18,
+          taxAmount: totalAmount * 0.03, // 3% GST on gold
           items: { create: items }
         }
       })
     }
 
-    // Create BOMs
-    const laptopProduct = products[0] // Laptop Pro 15
-    const monitorProduct = products[4] // Monitor 27"
-    const chairProduct = products[20] // Ergonomic Chair
-    const deskProduct = products[21] // Standing Desk
+    // Create BOMs — Jewellery manufacturing
+    const necklaceProduct = products[0] // 22K Gold Necklace Set
+    const bangleProduct = products[1] // 22K Gold Bangles
+    const ringProduct = products[2] // 18K Gold Ring
+    const earringProduct = products[3] // 22K Gold Jhumka
+    const mangalsutraProduct = products[4] // 22K Gold Mangalsutra
+    const diamondRing = products[10] // Diamond Solitaire Ring
+    const diamondBracelet = products[11] // Diamond Tennis Bracelet
+    const goldCastingGrain = products[27] // 22K Gold Casting Grain
+    const goldWire = products[28] // 18K Gold Wire
+    const goldSolder = products[30] // Gold Solder Sheet
+    const ruby = products[22] // Natural Ruby
+    const sapphire = products[24] // Blue Sapphire
+
     const bomRelations = [
-      { productId: laptopProduct.id, componentId: products[6].id, quantity: 2 },  // RAM
-      { productId: laptopProduct.id, componentId: products[7].id, quantity: 1 },  // SSD
-      { productId: laptopProduct.id, componentId: products[8].id, quantity: 1 },  // LCD Panel
-      { productId: laptopProduct.id, componentId: products[9].id, quantity: 1 },  // PSU
-      { productId: monitorProduct.id, componentId: products[8].id, quantity: 1 }, // LCD Panel
-      { productId: monitorProduct.id, componentId: products[9].id, quantity: 1 }, // PSU
-      { productId: chairProduct.id, componentId: products[24].id, quantity: 4 },  // Steel Rod
-      { productId: chairProduct.id, componentId: products[26].id, quantity: 2 },  // Copper Wire
-      { productId: chairProduct.id, componentId: products[27].id, quantity: 5 },  // Plastic Granules
-      { productId: deskProduct.id, componentId: products[24].id, quantity: 6 },   // Steel Rod
-      { productId: deskProduct.id, componentId: products[25].id, quantity: 2 },   // Plywood Sheet
-      { productId: deskProduct.id, componentId: products[27].id, quantity: 3 },   // Plastic Granules
+      { productId: necklaceProduct.id, componentId: goldCastingGrain.id, quantity: 3 }, // 30g gold
+      { productId: necklaceProduct.id, componentId: goldWire.id, quantity: 2 }, // 2m wire
+      { productId: necklaceProduct.id, componentId: goldSolder.id, quantity: 2 }, // solder
+      { productId: bangleProduct.id, componentId: goldCastingGrain.id, quantity: 4 }, // 40g gold per pair
+      { productId: bangleProduct.id, componentId: goldSolder.id, quantity: 1 },
+      { productId: ringProduct.id, componentId: goldCastingGrain.id, quantity: 1 }, // 10g gold
+      { productId: ringProduct.id, componentId: goldWire.id, quantity: 1 }, // 1m wire
+      { productId: ringProduct.id, componentId: ruby.id, quantity: 1 }, // 1 ruby
+      { productId: earringProduct.id, componentId: goldCastingGrain.id, quantity: 1 }, // 10g gold
+      { productId: earringProduct.id, componentId: goldWire.id, quantity: 1 },
+      { productId: earringProduct.id, componentId: goldSolder.id, quantity: 1 },
+      { productId: mangalsutraProduct.id, componentId: goldCastingGrain.id, quantity: 2 },
+      { productId: mangalsutraProduct.id, componentId: goldWire.id, quantity: 2 },
+      { productId: diamondRing.id, componentId: goldCastingGrain.id, quantity: 1 },
+      { productId: diamondRing.id, componentId: goldWire.id, quantity: 1 },
+      { productId: diamondRing.id, componentId: goldSolder.id, quantity: 1 },
+      { productId: diamondBracelet.id, componentId: goldCastingGrain.id, quantity: 2 },
+      { productId: diamondBracelet.id, componentId: goldWire.id, quantity: 2 },
+      { productId: diamondBracelet.id, componentId: goldSolder.id, quantity: 2 },
     ]
     for (const bom of bomRelations) {
       await db.bomComponent.create({ data: bom })
@@ -172,10 +193,10 @@ export async function POST() {
     // Create Work Orders
     const woStatuses = ['planned', 'in_progress', 'completed', 'cancelled']
     const woPriorities = ['low', 'medium', 'high', 'urgent']
-    const woProducts = [laptopProduct, monitorProduct, chairProduct, deskProduct]
+    const woProducts = [necklaceProduct, bangleProduct, ringProduct, earringProduct, diamondRing, diamondBracelet]
     for (let i = 0; i < 12; i++) {
       const product = woProducts[i % woProducts.length]
-      const targetQty = Math.floor(Math.random() * 50) + 10
+      const targetQty = Math.floor(Math.random() * 10) + 2
       const status = woStatuses[i % woStatuses.length]
       await db.workOrder.create({
         data: {
@@ -191,24 +212,32 @@ export async function POST() {
               productId: product.id,
               targetQty,
               completedQty: status === 'completed' ? targetQty : Math.floor(targetQty * Math.random() * 0.6),
-              wastageQty: Math.floor(targetQty * 0.02 * Math.random()),
+              wastageQty: Math.floor(targetQty * 0.03 * Math.random()), // 3% typical gold wastage
             }
           }
         }
       })
     }
 
-    // Create Customers
+    // Create Customers — Jewellery buyers
     const customers = []
-    const customerNames = ['Rajesh Enterprises', 'Mehta & Sons', 'Patel Traders', 'Singh Communications', 'Kumar Electronics', 'Verma Industries', 'Gupta Retail', 'Sharma Stores', 'Jain Distributors', 'Agarwal Wholesale', 'Deepak Mobiles', 'Ravi Textiles', 'Suresh Pharma', 'Mahesh Furniture', 'Vikram Auto', 'Anita Boutique', 'Pooja Cosmetics', 'Sunil Sports', 'Kavita Gifts', 'Manoj Books']
+    const customerNames = [
+      'Sharma Jewellers', 'Patel Ornaments', 'Jain Gold House', 'Khandelwal Gems',
+      'Agarwal Jewellers', 'Mehta & Sons Jewellers', 'Gupta Gold Palace',
+      'Singh Jewellers', 'Malhotra Diamonds', 'Verma Bullion',
+      'Roshni Bride Studio', 'Kalyani Wedding Collections', 'Priya Bridal Couture',
+      'Bhatt Jewellers', 'Chopra Ornaments', 'Das Gold Works',
+      'Iyer Traditional Jewels', 'Nair Heritage Gold', 'Reddy Bridal Sets',
+      'Kapoor Luxury Jewels'
+    ]
     for (let i = 0; i < customerNames.length; i++) {
-      const type = i < 5 ? 'wholesale' : i < 10 ? 'retail' : 'online'
+      const type = i < 5 ? 'wholesale' : i < 12 ? 'retail' : 'online'
       customers.push(await db.customer.create({
         data: {
           name: customerNames[i],
           email: `${customerNames[i].toLowerCase().replace(/[^a-z]/g, '')}@example.com`,
           phone: `+91-${9700000000 + i * 111111}`,
-          city: ['Noida', 'Delhi', 'Mumbai', 'Bangalore', 'Chennai'][i % 5],
+          city: ['Mumbai', 'Delhi', 'Jaipur', 'Chennai', 'Kolkata'][i % 5],
           type,
         }
       }))
@@ -218,11 +247,11 @@ export async function POST() {
     const soStatuses = ['draft', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
     for (let i = 0; i < 18; i++) {
       const customer = customers[i % customers.length]
-      const numItems = Math.floor(Math.random() * 3) + 1
+      const numItems = Math.floor(Math.random() * 2) + 1
       const items = []
       for (let j = 0; j < numItems; j++) {
-        const product = products[Math.floor(Math.random() * products.length)]
-        const qty = Math.floor(Math.random() * 20) + 1
+        const product = products[Math.floor(Math.random() * 20)] // mostly finished jewellery
+        const qty = Math.floor(Math.random() * 5) + 1
         items.push({ productId: product.id, quantity: qty, unitPrice: product.price, totalPrice: product.price * qty })
       }
       const totalAmount = items.reduce((sum, it) => sum + it.totalPrice, 0)
@@ -234,35 +263,36 @@ export async function POST() {
           status: soStatuses[i % soStatuses.length],
           orderDate: new Date(2026, Math.floor(Math.random() * 4), Math.floor(Math.random() * 28) + 1),
           totalAmount,
-          taxAmount: totalAmount * 0.18,
-          discount: Math.random() > 0.7 ? totalAmount * 0.05 : 0,
+          taxAmount: totalAmount * 0.03,
+          discount: Math.random() > 0.7 ? totalAmount * 0.02 : 0, // 2% making charge discount
           items: { create: items }
         }
       })
     }
 
     // Create POS Transactions
-    for (let i = 0; i < 60; i++) {
-      const numItems = Math.floor(Math.random() * 4) + 1
+    for (let i = 0; i < 50; i++) {
+      const numItems = Math.floor(Math.random() * 3) + 1
       const items = []
       for (let j = 0; j < numItems; j++) {
-        const product = products[Math.floor(Math.random() * 15)] // mostly retail products
-        const qty = Math.floor(Math.random() * 5) + 1
+        const product = products[Math.floor(Math.random() * 20)]
+        const qty = Math.floor(Math.random() * 2) + 1
         items.push({ productId: product.id, productName: product.name, quantity: qty, unitPrice: product.price, totalPrice: product.price * qty })
       }
       const subtotal = items.reduce((sum, it) => sum + it.totalPrice, 0)
+      const makingCharge = Math.floor(subtotal * 0.08) // 8% making charge typical
       await db.posTransaction.create({
         data: {
           transactionNumber: `TRX-2026-${String(i + 1).padStart(5, '0')}`,
           userId: [cashier.id, staff1.id, staff2.id][i % 3],
           customerName: Math.random() > 0.5 ? customerNames[Math.floor(Math.random() * customerNames.length)] : null,
-          subtotal,
-          taxAmount: subtotal * 0.05,
-          discount: Math.random() > 0.8 ? subtotal * 0.1 : 0,
-          totalAmount: subtotal + subtotal * 0.05 - (Math.random() > 0.8 ? subtotal * 0.1 : 0),
+          subtotal: subtotal + makingCharge,
+          taxAmount: Math.floor(subtotal * 0.03),
+          discount: Math.random() > 0.85 ? Math.floor(subtotal * 0.05) : 0,
+          totalAmount: subtotal + makingCharge + Math.floor(subtotal * 0.03) - (Math.random() > 0.85 ? Math.floor(subtotal * 0.05) : 0),
           paymentMethod: ['cash', 'card', 'upi'][i % 3],
-          status: i % 20 === 0 ? 'refunded' : 'completed',
-          createdAt: new Date(2026, 3, Math.floor(Math.random() * 22) + 1, Math.floor(Math.random() * 12) + 8, Math.floor(Math.random() * 60)),
+          status: i % 25 === 0 ? 'refunded' : 'completed',
+          createdAt: new Date(2026, 3, Math.floor(Math.random() * 22) + 1, Math.floor(Math.random() * 10) + 10, Math.floor(Math.random() * 60)),
           items: { create: items }
         }
       })
@@ -270,12 +300,12 @@ export async function POST() {
 
     // Create E-commerce Orders
     for (let i = 0; i < 15; i++) {
-      const customer = customers[(i + 10) % customers.length]
-      const numItems = Math.floor(Math.random() * 3) + 1
+      const customer = customers[(i + 12) % customers.length]
+      const numItems = Math.floor(Math.random() * 2) + 1
       const items = []
       for (let j = 0; j < numItems; j++) {
-        const product = products[Math.floor(Math.random() * 20)]
-        const qty = Math.floor(Math.random() * 3) + 1
+        const product = products[Math.floor(Math.random() * 15)]
+        const qty = Math.floor(Math.random() * 2) + 1
         items.push({ productId: product.id, productName: product.name, quantity: qty, unitPrice: product.price, totalPrice: product.price * qty })
       }
       const totalAmount = items.reduce((sum, it) => sum + it.totalPrice, 0)
@@ -285,11 +315,11 @@ export async function POST() {
           customerId: customer.id,
           status: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'][i % 6],
           orderDate: new Date(2026, 3, Math.floor(Math.random() * 22) + 1),
-          shippingAddress: `${customer.city}, India`,
+          shippingAddress: `Zaveri Bazaar, ${customer.city}, India`,
           billingAddress: `${customer.city}, India`,
           totalAmount,
-          taxAmount: totalAmount * 0.18,
-          shippingCost: totalAmount > 5000 ? 0 : 99,
+          taxAmount: totalAmount * 0.03,
+          shippingCost: totalAmount > 50000 ? 0 : 499, // insured shipping
           paymentMethod: ['online', 'cod', 'upi'][i % 3],
           paymentStatus: i % 5 === 0 ? 'pending' : 'paid',
           items: { create: items }
@@ -299,23 +329,23 @@ export async function POST() {
 
     // Create Shipments
     for (let i = 0; i < 10; i++) {
-      const numItems = Math.floor(Math.random() * 3) + 1
+      const numItems = Math.floor(Math.random() * 2) + 1
       const items = []
       for (let j = 0; j < numItems; j++) {
-        const product = products[Math.floor(Math.random() * products.length)]
-        items.push({ productId: product.id, quantity: Math.floor(Math.random() * 50) + 5 })
+        const product = products[Math.floor(Math.random() * 15)]
+        items.push({ productId: product.id, quantity: Math.floor(Math.random() * 5) + 1 })
       }
       await db.shipment.create({
         data: {
           shipmentNumber: `SHP-2026-${String(i + 1).padStart(4, '0')}`,
           status: ['pending', 'shipped', 'in_transit', 'delivered', 'cancelled'][i % 5],
-          carrier: ['BlueDart', 'Delhivery', 'DTDC', 'India Post', 'FedEx'][i % 5],
-          trackingNumber: `TRK${Date.now()}${i}`,
+          carrier: ['BlueDart Secure', 'Gati Safe', 'Delhivery Valuable', 'BVC Secure', 'Sequel Logistics'][i % 5],
+          trackingNumber: `SHP${Date.now()}${i}`,
           shippingDate: new Date(2026, 3, Math.floor(Math.random() * 20) + 1),
           deliveryDate: i % 5 === 3 ? new Date(2026, 3, Math.floor(Math.random() * 10) + 20) : null,
-          origin: ['Mumbai', 'Delhi', 'Bangalore'][i % 3],
-          destination: ['Noida', 'Chennai', 'Pune'][i % 3],
-          cost: Math.floor(Math.random() * 5000) + 500,
+          origin: ['Mumbai', 'Surat', 'Jaipur'][i % 3],
+          destination: ['Delhi', 'Chennai', 'Kolkata'][i % 3],
+          cost: Math.floor(Math.random() * 3000) + 500, // higher cost for insured
           items: { create: items }
         }
       })
@@ -324,13 +354,13 @@ export async function POST() {
     // Create Demand Forecasts
     for (const product of products.slice(0, 15)) {
       for (let m = 0; m < 3; m++) {
-        const baseDemand = Math.floor(Math.random() * 200) + 20
+        const baseDemand = Math.floor(Math.random() * 15) + 3
         await db.demandForecast.create({
           data: {
             productId: product.id,
             period: `2026-${String(m + 5).padStart(2, '0')}`,
-            predictedDemand: baseDemand + Math.floor(Math.random() * 50),
-            confidence: 0.6 + Math.random() * 0.35,
+            predictedDemand: baseDemand + Math.floor(Math.random() * 8),
+            confidence: 0.55 + Math.random() * 0.35,
             model: ['prophet', 'arima', 'moving_avg'][m % 3],
           }
         })
@@ -347,16 +377,16 @@ export async function POST() {
             inventoryItemId: inv.id,
             warehouseId: inv.warehouseId,
             type: ['in', 'out', 'transfer', 'adjustment', 'return'][i % 5],
-            quantity: Math.floor(Math.random() * 50) + 1,
+            quantity: Math.floor(Math.random() * 5) + 1,
             reference: i % 5 === 0 ? `PO-2026-${String(i + 1).padStart(4, '0')}` : i % 5 === 1 ? `SO-2026-${String(i + 1).padStart(4, '0')}` : null,
-            notes: ['Stock received', 'Order fulfilled', 'Warehouse transfer', 'Stock adjustment', 'Customer return'][i % 5],
+            notes: ['Gold received from supplier', 'Customer order fulfilled', 'Vault to workshop transfer', 'Weight adjustment', 'Customer exchange'][i % 5],
             performedBy: [admin.name, manager.name, staff1.name][i % 3],
           }
         })
       }
     }
 
-    return NextResponse.json({ success: true, message: 'Database seeded successfully with comprehensive demo data' })
+    return NextResponse.json({ success: true, message: 'GoldGem database seeded with jewellery industry data' })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json({ success: false, error: message }, { status: 500 })

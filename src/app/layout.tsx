@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ERP Pro - Small Business Solutions",
-  description: "Comprehensive ERP System for Small Businesses - Manufacturing, Supply Chain, Inventory, POS & E-Commerce",
-  keywords: ["ERP", "Small Business", "Manufacturing", "Supply Chain", "Inventory", "POS", "E-Commerce", "AI/ML"],
+  title: "GoldGem — Jewellery ERP System",
+  description: "GoldGem: Complete ERP for Jewellery Business — Manufacturing (Karigarkhana), Supply Chain, Vault Inventory, Counter Sales & Online Store with AI/ML Insights",
+  keywords: ["GoldGem", "Jewellery ERP", "Gold", "Diamond", "Jewellery Manufacturing", "Supply Chain", "Inventory", "POS", "E-Commerce", "AI/ML"],
 };
 
 export default function RootLayout({
