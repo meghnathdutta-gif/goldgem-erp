@@ -1,0 +1,11 @@
+[ai-service] Installing dependencies...
+bun install v1.3.12 (700fc117)
+No packages! Deleted empty lockfile
+
+[7.00ms] done
+[ai-service] Running bun run dev...
+$ python3 main.py
+INFO:     Started server process [902]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:3031 (Press CTRL+C to quit)

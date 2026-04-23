@@ -173,21 +173,23 @@ export default function ERPApp() {
   const { activeModule, setActiveModule, sidebarCollapsed, toggleCollapsed } = useERPStore()
   const [isDark, setIsDark] = useState(false)
   const [seeded, setSeeded] = useState(false)
-  const [seeding, setSeeding] = useState(false)
+  const [seeding, setSeeding] = useState(true)
 
   useEffect(() => {
-    if (!seeded) {
-      const doSeed = async () => {
-        setSeeding(true)
-        try {
-          const res = await fetch('/api/seed', { method: 'POST' })
-          if (res.ok) { setSeeded(true); toast.success('Demo data loaded successfully!') }
-        } catch { /* already seeded */ }
-        setSeeding(false)
-      }
-      doSeed()
+    // Check if database is seeded
+    const checkSeed = async () => {
+      setSeeding(true)
+      try {
+        const res = await fetch('/api/seed')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.seeded) { setSeeded(true); setSeeded(true) }
+        }
+      } catch { /* ignore */ }
+      setSeeding(false)
     }
-  }, [seeded])
+    checkSeed()
+  }, [])
 
   useEffect(() => {
     if (isDark) document.documentElement.classList.add('dark')

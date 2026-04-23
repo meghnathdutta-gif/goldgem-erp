@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  /* config options here */
+  // Vercel handles output automatically — no "standalone" needed
   typescript: {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  images: {
+    domains: [],
+  },
 };
 
 export default nextConfig;
