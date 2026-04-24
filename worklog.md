@@ -1,25 +1,25 @@
-# ERP Pro - Work Log
-
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Build comprehensive Small Business ERP System
+Task: Migrate Goldgem ERP from SQLite/Electron desktop to Vercel + Neon PostgreSQL cloud deployment
 
 Work Log:
-- Created Prisma database schema with 18 models covering all ERP modules
-- Pushed schema to SQLite database
-- Created 16 API routes for all modules (products, categories, warehouses, inventory, suppliers, purchase-orders, shipments, work-orders, bom, customers, sales-orders, pos, ecommerce, dashboard, ai/forecast, seed)
-- Built complete single-page ERP application with 7 modules
-- Created Zustand store for navigation state management
-- Implemented TanStack Query for data fetching (React 19 compliant)
-- Added QueryClientProvider for TanStack Query setup
-- Seeded database with realistic demo data (29 products, 20 customers, 60 POS transactions, etc.)
-- Created Python AI/ML microservice with FastAPI (demand forecasting, inventory optimization, anomaly detection, trend analysis)
-- All lint checks pass clean
+- Removed unnecessary files: mini-services, examples, old download files (Electron, .exe build scripts)
+- Switched Prisma schema: kept SQLite for sandbox preview, created schema.neon.prisma for PostgreSQL
+- Updated package.json: name → "goldgem-erp", build script → "prisma generate && next build", postinstall hook
+- Updated next.config.ts: removed "output: standalone" (Vercel handles this)
+- Created vercel.json with build commands and region config
+- Created .gitignore for cloud deployment
+- Created switch-to-neon.sh and switch-to-sqlite.sh scripts for easy schema switching
+- Added .env.example with Neon PostgreSQL connection string format
+- Re-seeded database with 32 products, 5 suppliers, 20 customers, 50 POS transactions
+- Verified app renders correctly with 200 status code and all API endpoints working
+- Dashboard API returns KPIs, revenue data, inventory data correctly
 
 Stage Summary:
-- Fully functional ERP system with Dashboard, Inventory, Supply Chain, Manufacturing, POS, E-Commerce, and AI Insights modules
-- Professional UI with emerald/teal color scheme, dark sidebar, charts via Recharts
-- Database: SQLite with 18 interconnected models
-- Python AI service: FastAPI + NumPy + Pandas + scikit-learn
-- Free hosting ready: Vercel (Next.js) + Render (Python API)
+- Project is now Vercel + Neon cloud compatible
+- Dual schema approach: SQLite (local/dev) + PostgreSQL (Neon/cloud)
+- All 7 ERP modules functional: Dashboard, Inventory, Supply Chain, Manufacturing, POS, E-Commerce, AI Insights
+- Database fully seeded with jewellery industry demo data
+- Deployment guide PDF generated: /home/z/my-project/download/Goldgem-ERP-Cloud-Deployment-Guide.pdf
+- 10-section guide covering: platform comparison, architecture, step-by-step deployment, env vars, project structure, modules, database schema, troubleshooting, local dev setup, cost analysis
