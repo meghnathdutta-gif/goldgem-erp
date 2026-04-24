@@ -1,810 +1,399 @@
 #!/usr/bin/env python3
 """Generate GoldGem ERP Cloud Deployment Guide PDF"""
 
-import os, sys
+import os
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch, cm
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+from reportlab.lib import colors
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+    PageBreak, KeepTogether, Image
+)
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
+
+# ── Font Registration ──
+pdfmetrics.registerFont(TTFont('LiberationSerif', '/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf'))
+pdfmetrics.registerFont(TTFont('LiberationSerif-Bold', '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf'))
+pdfmetrics.registerFont(TTFont('Carlito', '/usr/share/fonts/truetype/english/Carlito-Regular.ttf'))
+pdfmetrics.registerFont(TTFont('Carlito-Bold', '/usr/share/fonts/truetype/english/Carlito-Bold.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuSansBold', '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf'))
+registerFontFamily('LiberationSerif', normal='LiberationSerif', bold='LiberationSerif-Bold')
+registerFontFamily('Carlito', normal='Carlito', bold='Carlito-Bold')
+registerFontFamily('DejaVuSans', normal='DejaVuSans', bold='DejaVuSansBold')
 
 # ── Palette ──
-from reportlab.lib import colors
-ACCENT       = colors.HexColor('#5a32d1')
-TEXT_PRIMARY  = colors.HexColor('#232627')
-TEXT_MUTED    = colors.HexColor('#72787e')
-BG_SURFACE   = colors.HexColor('#dbe0e4')
-BG_PAGE      = colors.HexColor('#eaedef')
+ACCENT       = colors.HexColor('#1a7897')
+TEXT_PRIMARY  = colors.HexColor('#21201e')
+TEXT_MUTED    = colors.HexColor('#807c74')
+BG_SURFACE   = colors.HexColor('#e4e1d9')
+BG_PAGE      = colors.HexColor('#f3f3f0')
 TABLE_HEADER_COLOR = ACCENT
 TABLE_HEADER_TEXT  = colors.white
 TABLE_ROW_EVEN     = colors.white
 TABLE_ROW_ODD      = BG_SURFACE
 
-# ── Fonts ──
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase.pdfmetrics import registerFontFamily
-
-pdfmetrics.registerFont(TTFont('DejaVuSerif', '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf'))
-pdfmetrics.registerFont(TTFont('DejaVuSerif-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf'))
-pdfmetrics.registerFont(TTFont('Carlito', '/usr/share/fonts/truetype/english/Carlito-Regular.ttf'))
-pdfmetrics.registerFont(TTFont('Carlito-Bold', '/usr/share/fonts/truetype/english/Carlito-Bold.ttf'))
-pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
-pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'))
-pdfmetrics.registerFont(TTFont('DejaVuMono', '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'))
-pdfmetrics.registerFont(TTFont('DejaVuMono-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf'))
-registerFontFamily('DejaVuSerif', normal='DejaVuSerif', bold='DejaVuSerif-Bold')
-registerFontFamily('Carlito', normal='Carlito', bold='Carlito-Bold')
-registerFontFamily('DejaVuSans', normal='DejaVuSans', bold='DejaVuSans-Bold')
-registerFontFamily('DejaVuMono', normal='DejaVuMono', bold='DejaVuMono-Bold')
-
-# ── Core ──
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch, cm
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, KeepTogether, CondPageBreak
-)
-from reportlab.platypus.tableofcontents import TableOfContents
-import hashlib
-
-PAGE_W, PAGE_H = A4
-LM = 1.0 * inch
-RM = 1.0 * inch
-TM = 0.9 * inch
-BM = 0.9 * inch
-AW = PAGE_W - LM - RM  # available width
-
 # ── Styles ──
+styles = getSampleStyleSheet()
+
+title_style = ParagraphStyle(
+    'CustomTitle', fontName='LiberationSerif', fontSize=28,
+    leading=34, alignment=TA_CENTER, textColor=ACCENT,
+    spaceAfter=6
+)
+subtitle_style = ParagraphStyle(
+    'CustomSubtitle', fontName='LiberationSerif', fontSize=14,
+    leading=20, alignment=TA_CENTER, textColor=TEXT_MUTED,
+    spaceAfter=24
+)
 h1_style = ParagraphStyle(
-    name='H1', fontName='DejaVuSerif', fontSize=20, leading=28,
-    textColor=ACCENT, spaceBefore=18, spaceAfter=10, alignment=TA_LEFT
+    'H1', fontName='LiberationSerif', fontSize=20,
+    leading=26, textColor=ACCENT, spaceBefore=24, spaceAfter=12
 )
 h2_style = ParagraphStyle(
-    name='H2', fontName='DejaVuSerif', fontSize=15, leading=22,
-    textColor=TEXT_PRIMARY, spaceBefore=14, spaceAfter=8, alignment=TA_LEFT
+    'H2', fontName='LiberationSerif', fontSize=15,
+    leading=20, textColor=TEXT_PRIMARY, spaceBefore=18, spaceAfter=8
 )
 h3_style = ParagraphStyle(
-    name='H3', fontName='DejaVuSerif', fontSize=12, leading=18,
-    textColor=TEXT_PRIMARY, spaceBefore=10, spaceAfter=6, alignment=TA_LEFT
+    'H3', fontName='LiberationSerif', fontSize=12,
+    leading=16, textColor=TEXT_PRIMARY, spaceBefore=12, spaceAfter=6
 )
-body = ParagraphStyle(
-    name='Body', fontName='DejaVuSerif', fontSize=10.5, leading=17,
-    textColor=TEXT_PRIMARY, spaceBefore=0, spaceAfter=6, alignment=TA_JUSTIFY
+body_style = ParagraphStyle(
+    'Body', fontName='LiberationSerif', fontSize=10.5,
+    leading=17, alignment=TA_JUSTIFY, textColor=TEXT_PRIMARY,
+    spaceAfter=8
 )
 code_style = ParagraphStyle(
-    name='Code', fontName='DejaVuMono', fontSize=9, leading=14,
-    textColor=TEXT_PRIMARY, spaceBefore=4, spaceAfter=4,
-    leftIndent=18, backColor=colors.HexColor('#f4f4f4'),
-    borderColor=colors.HexColor('#dddddd'), borderWidth=0.5,
-    borderPadding=6, alignment=TA_LEFT
+    'Code', fontName='DejaVuSans', fontSize=8.5,
+    leading=13, textColor=colors.HexColor('#1a1a2e'),
+    backColor=colors.HexColor('#f0f0ed'),
+    leftIndent=12, rightIndent=12,
+    spaceBefore=6, spaceAfter=6, borderPadding=6
 )
 bullet_style = ParagraphStyle(
-    name='Bullet', fontName='DejaVuSerif', fontSize=10.5, leading=17,
-    textColor=TEXT_PRIMARY, spaceBefore=2, spaceAfter=4,
-    leftIndent=24, bulletIndent=12, alignment=TA_LEFT
+    'Bullet', fontName='LiberationSerif', fontSize=10.5,
+    leading=17, textColor=TEXT_PRIMARY, leftIndent=24,
+    bulletIndent=12, spaceAfter=4
 )
 note_style = ParagraphStyle(
-    name='Note', fontName='DejaVuSerif', fontSize=10, leading=16,
-    textColor=TEXT_MUTED, spaceBefore=6, spaceAfter=6,
-    leftIndent=18, borderColor=ACCENT, borderWidth=1,
-    borderPadding=8, backColor=colors.HexColor('#f5f0ff'),
-    alignment=TA_LEFT
+    'Note', fontName='LiberationSerif', fontSize=9.5,
+    leading=15, textColor=ACCENT, leftIndent=18,
+    borderPadding=8, spaceBefore=6, spaceAfter=6
 )
-toc_h1 = ParagraphStyle(name='TOCH1', fontName='DejaVuSerif', fontSize=13, leftIndent=20, leading=22)
-toc_h2 = ParagraphStyle(name='TOCH2', fontName='DejaVuSerif', fontSize=11, leftIndent=40, leading=18)
-
-header_cell = ParagraphStyle(
-    name='HeaderCell', fontName='DejaVuSerif', fontSize=10.5,
-    textColor=colors.white, alignment=TA_CENTER, leading=15
+step_style = ParagraphStyle(
+    'Step', fontName='LiberationSerif', fontSize=10.5,
+    leading=17, textColor=TEXT_PRIMARY, leftIndent=30,
+    spaceAfter=6
 )
-data_cell = ParagraphStyle(
-    name='DataCell', fontName='DejaVuSerif', fontSize=10,
-    textColor=TEXT_PRIMARY, alignment=TA_LEFT, leading=14
+header_cell_style = ParagraphStyle(
+    'HeaderCell', fontName='LiberationSerif', fontSize=10,
+    leading=14, textColor=TABLE_HEADER_TEXT, alignment=TA_CENTER
 )
-data_cell_c = ParagraphStyle(
-    name='DataCellC', fontName='DejaVuSerif', fontSize=10,
-    textColor=TEXT_PRIMARY, alignment=TA_CENTER, leading=14
+cell_style = ParagraphStyle(
+    'Cell', fontName='LiberationSerif', fontSize=9.5,
+    leading=14, textColor=TEXT_PRIMARY, alignment=TA_LEFT
+)
+cell_center_style = ParagraphStyle(
+    'CellCenter', fontName='LiberationSerif', fontSize=9.5,
+    leading=14, textColor=TEXT_PRIMARY, alignment=TA_CENTER
 )
 
-# ── TocDocTemplate ──
-class TocDocTemplate(SimpleDocTemplate):
-    def afterFlowable(self, flowable):
-        if hasattr(flowable, 'bookmark_name'):
-            level = getattr(flowable, 'bookmark_level', 0)
-            text = getattr(flowable, 'bookmark_text', '')
-            key = getattr(flowable, 'bookmark_key', '')
-            self.notify('TOCEntry', (level, text, self.page, key))
-
-def add_heading(text, style, level=0):
-    key = 'h_%s' % hashlib.md5(text.encode()).hexdigest()[:8]
-    p = Paragraph('<a name="%s"/>%s' % (key, text), style)
-    p.bookmark_name = text
-    p.bookmark_level = level
-    p.bookmark_text = text
-    p.bookmark_key = key
-    return p
-
-H1_ORPHAN = (PAGE_H - TM - BM) * 0.15
-
-def section(text):
-    return [CondPageBreak(H1_ORPHAN), add_heading(text, h1_style, level=0)]
-
-def subsection(text):
-    return [add_heading(text, h2_style, level=1)]
-
-def subsubsection(text):
-    return [add_heading(text, h3_style, level=2)]
-
-def para(text):
-    return Paragraph(text, body)
-
-def code(text):
-    return Paragraph(text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'), code_style)
-
-def bullet(text):
-    return Paragraph(text, bullet_style)
-
-def note(text):
-    return Paragraph(text, note_style)
-
-def make_table(headers, rows, col_widths=None):
-    cw = col_widths or [AW * r for r in [1.0/len(headers)] * len(headers)]
-    data = [[Paragraph('<b>%s</b>' % h, header_cell) for h in headers]]
-    for row in rows:
-        data.append([Paragraph(str(c), data_cell) if i == 0 else Paragraph(str(c), data_cell_c) for i, c in enumerate(row)])
-    t = Table(data, colWidths=cw, hAlign='CENTER')
+# ── Helper ──
+def make_table(data_rows, col_widths):
+    t = Table(data_rows, colWidths=col_widths, hAlign='CENTER')
     style_cmds = [
         ('BACKGROUND', (0, 0), (-1, 0), TABLE_HEADER_COLOR),
         ('TEXTCOLOR', (0, 0), (-1, 0), TABLE_HEADER_TEXT),
-        ('GRID', (0, 0), (-1, -1), 0.5, TEXT_MUTED),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
         ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, TEXT_MUTED),
     ]
-    for i in range(1, len(data)):
+    for i in range(1, len(data_rows)):
         bg = TABLE_ROW_EVEN if i % 2 == 1 else TABLE_ROW_ODD
         style_cmds.append(('BACKGROUND', (0, i), (-1, i), bg))
     t.setStyle(TableStyle(style_cmds))
     return t
 
-# ── Build Document ──
-output_path = '/home/z/my-project/download/GoldGem-ERP-Cloud-Deployment-Guide.pdf'
+def step_num(num, text):
+    return Paragraph(f'<b>Step {num}:</b> {text}', step_style)
 
-doc = TocDocTemplate(
-    output_path, pagesize=A4,
-    leftMargin=LM, rightMargin=RM, topMargin=TM, bottomMargin=BM
+def note_box(text):
+    return Paragraph(f'<b>Note:</b> {text}', note_style)
+
+# ── Document ──
+output_path = '/home/z/my-project/download/GoldGem_ERP_Deployment_Guide.pdf'
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+doc = SimpleDocTemplate(
+    output_path,
+    pagesize=A4,
+    topMargin=0.8*inch,
+    bottomMargin=0.8*inch,
+    leftMargin=0.9*inch,
+    rightMargin=0.9*inch,
+    title='GoldGem ERP - Cloud Deployment Guide',
+    author='Z.ai',
+    creator='Z.ai'
 )
 
 story = []
+page_w = A4[0] - 0.9*inch*2
 
-# ── TOC ──
-story.append(Paragraph('<b>Table of Contents</b>', ParagraphStyle(
-    name='TOCTitle', fontName='DejaVuSerif', fontSize=22, leading=30,
-    textColor=ACCENT, alignment=TA_LEFT, spaceAfter=18
+# ──────────── COVER ────────────
+story.append(Spacer(1, 100))
+story.append(Paragraph('<b>GoldGem ERP</b>', title_style))
+story.append(Spacer(1, 8))
+story.append(Paragraph('Cloud Deployment Guide', ParagraphStyle(
+    'CoverSub', fontName='LiberationSerif', fontSize=18,
+    leading=24, alignment=TA_CENTER, textColor=TEXT_PRIMARY
 )))
-toc = TableOfContents()
-toc.levelStyles = [toc_h1, toc_h2]
-story.append(toc)
+story.append(Spacer(1, 30))
+story.append(Paragraph('Deploy to Vercel + Neon PostgreSQL (Free Tier)', subtitle_style))
+story.append(Spacer(1, 60))
+story.append(Paragraph('A complete step-by-step guide to deploy your GoldGem ERP Jewellery Management System to the cloud using entirely free services. This guide covers setting up a Neon PostgreSQL database, configuring environment variables, running Prisma migrations, and deploying to Vercel with automatic builds.', body_style))
+story.append(Spacer(1, 30))
+story.append(Paragraph('Tech Stack: Next.js 16 + Prisma ORM + PostgreSQL (Neon) + Tailwind CSS + shadcn/ui', ParagraphStyle(
+    'Stack', fontName='LiberationSerif', fontSize=10,
+    leading=16, alignment=TA_CENTER, textColor=TEXT_MUTED
+)))
+story.append(Spacer(1, 10))
+story.append(Paragraph('Amity Online MCA 4th Semester Major Project', ParagraphStyle(
+    'Project', fontName='LiberationSerif', fontSize=10,
+    leading=16, alignment=TA_CENTER, textColor=TEXT_MUTED
+)))
+
 story.append(PageBreak())
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 1: Overview
-# ══════════════════════════════════════════════════════════════
-story.extend(section('1. Overview'))
-story.append(para(
-    'GoldGem ERP is a comprehensive Jewellery Industry Enterprise Resource Planning system built with modern web technologies. '
-    'This guide walks you through deploying the application to the cloud at zero cost using Vercel (for hosting) and Neon PostgreSQL (for the database). '
-    'The entire stack is designed for free-tier cloud deployment, making it ideal for academic projects, demos, and small business prototypes.'
-))
-story.append(para(
-    'The application consists of seven core modules: Dashboard, Manufacturing, Supply Chain Management, Inventory Management, '
-    'Point of Sale (POS), E-Commerce, and AI Insights. Each module has dedicated API routes and a fully functional UI built with React, '
-    'shadcn/ui, and Tailwind CSS. The backend uses Next.js API routes with Prisma ORM for database operations.'
-))
+# ──────────── TABLE OF CONTENTS ────────────
+story.append(Paragraph('<b>Table of Contents</b>', h1_style))
+story.append(Spacer(1, 12))
+toc_items = [
+    ('1', 'Overview: What You Will Deploy'),
+    ('2', 'Prerequisites: Accounts You Need'),
+    ('3', 'Step 1: Download Your Project'),
+    ('4', 'Step 2: Set Up Neon PostgreSQL Database'),
+    ('5', 'Step 3: Push Code to GitHub'),
+    ('6', 'Step 4: Deploy to Vercel'),
+    ('7', 'Step 5: Run Database Migrations'),
+    ('8', 'Step 6: Seed Your Database'),
+    ('9', 'Step 7: Verify Deployment'),
+    ('10', 'Environment Variables Reference'),
+    ('11', 'Troubleshooting Common Issues'),
+    ('12', 'Free Tier Limits & Tips'),
+]
+for num, title in toc_items:
+    story.append(Paragraph(f'{num}.  {title}', ParagraphStyle(
+        f'TOC{num}', fontName='LiberationSerif', fontSize=11,
+        leading=18, textColor=TEXT_PRIMARY, leftIndent=20, spaceAfter=4
+    )))
 
-story.extend(subsection('1.1 Technology Stack'))
-story.append(make_table(
-    ['Component', 'Technology', 'Version'],
-    [
-        ['Frontend Framework', 'Next.js (App Router)', '16.x'],
-        ['UI Library', 'React + shadcn/ui', '19.x'],
-        ['Styling', 'Tailwind CSS', '4.x'],
-        ['State Management', 'Zustand + React Query', '5.x / 5.x'],
-        ['Backend', 'Next.js API Routes', '16.x'],
-        ['ORM', 'Prisma', '6.x'],
-        ['Database', 'PostgreSQL (Neon)', 'Serverless'],
-        ['Hosting', 'Vercel', 'Free Tier'],
-        ['Charts', 'Recharts', '2.x'],
-        ['Package Manager', 'Bun', '1.x'],
-    ],
-    col_widths=[AW*0.30, AW*0.42, AW*0.28]
-))
-story.append(Spacer(1, 6))
+story.append(PageBreak())
 
-story.extend(subsection('1.2 Architecture Summary'))
-story.append(para(
-    'GoldGem ERP follows a monolithic Next.js architecture where the frontend and backend are co-located in a single application. '
-    'The frontend renders React components with server-side rendering capabilities, while the backend exposes RESTful API endpoints '
-    'through Next.js Route Handlers. Prisma ORM abstracts database operations and provides type-safe queries against the PostgreSQL database. '
-    'This architecture is optimized for Vercel\'s serverless deployment model, where each API route becomes an independent serverless function.'
-))
-story.append(para(
-    'The database schema comprises 17 models covering the entire jewellery ERP domain: Products, Categories, Warehouses, Inventory, '
-    'Suppliers, Purchase Orders, Work Orders, Bills of Materials (BOM), Sales Orders, Customers, POS Transactions, E-Commerce Orders, '
-    'Shipments, Demand Forecasts, and Audit Logs. Seed data populates the database with realistic global jewellery sample data.'
-))
+# ──────────── SECTION 1: OVERVIEW ────────────
+story.append(Paragraph('<b>1. Overview: What You Will Deploy</b>', h1_style))
+story.append(Paragraph('GoldGem ERP is a full-stack Jewellery Industry Enterprise Resource Planning system built as a modern web application. It features seven integrated modules: a real-time Dashboard with KPIs and charts, Manufacturing with work orders and Bill of Materials (BOM), Supply Chain Management for purchase orders and shipments, Inventory Management with multi-warehouse tracking, a Point-of-Sale (POS) system, an E-Commerce order management module, and an AI Insights dashboard with demand forecasting. The application uses Next.js 16 for the frontend and API routes, Prisma ORM for database operations, and PostgreSQL as the production database.', body_style))
+story.append(Paragraph('When deployed to the cloud, your application will run on Vercel\'s serverless infrastructure, which automatically handles scaling, SSL certificates, and global CDN distribution. Your database will be hosted on Neon PostgreSQL, a serverless Postgres platform that provides a free tier with 0.5 GB of storage, which is more than sufficient for a project demonstration. The entire deployment costs nothing and can be completed in under 30 minutes if you follow these steps carefully.', body_style))
+story.append(Paragraph('The deployment architecture is straightforward: your Next.js application runs on Vercel edge functions, API routes connect to the Neon PostgreSQL database using Prisma Client, and the Prisma schema has been pre-configured for PostgreSQL compatibility. The build process automatically runs <font name="DejaVuSans" size="8.5">prisma generate</font> to create the Prisma Client before the Next.js build, ensuring all database operations work correctly in the serverless environment.', body_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 2: Prerequisites
-# ══════════════════════════════════════════════════════════════
-story.extend(section('2. Prerequisites'))
-story.append(para(
-    'Before you begin the deployment process, ensure you have the following accounts and tools set up. All services listed below offer '
-    'free tiers that are sufficient for deploying and running GoldGem ERP for an academic project or demonstration purposes.'
-))
+# Architecture table
+story.append(Spacer(1, 12))
+arch_data = [
+    [Paragraph('<b>Component</b>', header_cell_style), Paragraph('<b>Service</b>', header_cell_style), Paragraph('<b>Plan</b>', header_cell_style), Paragraph('<b>Purpose</b>', header_cell_style)],
+    [Paragraph('Frontend + API', cell_style), Paragraph('Vercel', cell_center_style), Paragraph('Hobby (Free)', cell_center_style), Paragraph('Host Next.js app', cell_style)],
+    [Paragraph('Database', cell_style), Paragraph('Neon PostgreSQL', cell_center_style), Paragraph('Free Tier', cell_center_style), Paragraph('Store all ERP data', cell_style)],
+    [Paragraph('Version Control', cell_style), Paragraph('GitHub', cell_center_style), Paragraph('Free', cell_center_style), Paragraph('Source code repository', cell_style)],
+]
+story.append(make_table(arch_data, [page_w*0.2, page_w*0.22, page_w*0.18, page_w*0.4]))
 
-story.extend(subsection('2.1 Required Accounts'))
-story.append(make_table(
-    ['Service', 'Purpose', 'Free Tier Limits', 'URL'],
-    [
-        ['GitHub', 'Code repository', 'Unlimited public repos', 'github.com'],
-        ['Vercel', 'App hosting', '100GB bandwidth/month', 'vercel.com'],
-        ['Neon', 'PostgreSQL database', '0.5GB storage, 100 compute hrs/month', 'neon.tech'],
-    ],
-    col_widths=[AW*0.15, AW*0.22, AW*0.35, AW*0.28]
-))
-story.append(Spacer(1, 6))
+# ──────────── SECTION 2: PREREQUISITES ────────────
+story.append(Paragraph('<b>2. Prerequisites: Accounts You Need</b>', h1_style))
+story.append(Paragraph('Before you begin the deployment process, you need to create three free accounts. Each of these services offers a generous free tier that is more than enough for hosting your GoldGem ERP project. The entire process requires no credit card and no payment information. Make sure you have access to the email addresses associated with these accounts, as you will need to verify them during setup.', body_style))
 
-story.extend(subsection('2.2 Required Tools'))
-story.append(para('Install the following tools on your local machine:'))
-story.append(bullet('<b>Node.js 18+</b> - JavaScript runtime (nodejs.org)'))
-story.append(bullet('<b>Bun</b> - Fast JavaScript package manager (bun.sh)'))
-story.append(bullet('<b>Git</b> - Version control (git-scm.com)'))
-story.append(bullet('<b>Vercel CLI</b> - Install with: <font name="DejaVuSans">npm i -g vercel</font>'))
+prereq_data = [
+    [Paragraph('<b>Service</b>', header_cell_style), Paragraph('<b>URL</b>', header_cell_style), Paragraph('<b>What You Get (Free)</b>', header_cell_style)],
+    [Paragraph('GitHub', cell_style), Paragraph('github.com', cell_center_style), Paragraph('Unlimited public repos, Actions CI/CD', cell_style)],
+    [Paragraph('Vercel', cell_style), Paragraph('vercel.com', cell_center_style), Paragraph('100 GB bandwidth/month, serverless functions, auto SSL', cell_style)],
+    [Paragraph('Neon', cell_style), Paragraph('neon.tech', cell_center_style), Paragraph('0.5 GB storage, 100 compute hours/month, branch support', cell_style)],
+]
 story.append(Spacer(1, 8))
-
-# ══════════════════════════════════════════════════════════════
-# SECTION 3: Step 1 - Set Up Neon PostgreSQL
-# ══════════════════════════════════════════════════════════════
-story.extend(section('3. Step 1: Set Up Neon PostgreSQL Database'))
-story.append(para(
-    'Neon is a serverless PostgreSQL platform that offers a generous free tier perfect for project deployments. '
-    'Unlike traditional PostgreSQL hosting, Neon provides instant database creation, automatic scaling to zero when idle '
-    '(which preserves your free compute hours), and built-in connection pooling. This makes it ideal for Vercel serverless functions.'
-))
-
-story.extend(subsection('3.1 Create a Neon Account and Project'))
-story.append(para('Follow these steps to create your PostgreSQL database on Neon:'))
-story.append(bullet('1. Navigate to <b>neon.tech</b> and click "Sign Up". You can sign up using your GitHub account for convenience.'))
-story.append(bullet('2. After signing in, click <b>"New Project"</b> on the Neon dashboard.'))
-story.append(bullet('3. Enter a project name such as <b>"goldgem-erp"</b>.'))
-story.append(bullet('4. Select the region closest to your target audience. For global reach, choose <b>AWS US East (Ohio)</b> or <b>AWS EU West (Ireland)</b>. For India, select <b>AWS Asia-Pacific (Mumbai)</b>.'))
-story.append(bullet('5. Click <b>"Create Project"</b>. Neon will provision your database in approximately 5-10 seconds.'))
+story.append(make_table(prereq_data, [page_w*0.15, page_w*0.2, page_w*0.65]))
+story.append(Spacer(1, 8))
+story.append(note_box('You do NOT need a credit card for any of these services. The free tiers are permanent, not trials.'))
 story.append(Spacer(1, 6))
+story.append(note_box('You also need Node.js 18+ installed on your computer. Download from nodejs.org if you do not have it already.'))
 
-story.extend(subsection('3.2 Copy the Connection String'))
-story.append(para(
-    'After the project is created, Neon displays your connection string on the dashboard. It looks like this:'
-))
-story.append(code('postgresql://username:password@ep-xxx-xxx-123456.us-east-2.aws.neon.tech/goldgem?sslmode=require'))
-story.append(para(
-    'Copy this connection string and save it securely. You will need it as the <b>DATABASE_URL</b> environment variable in Vercel. '
-    'Neon provides both a pooled connection string (recommended for serverless) and a direct connection string. Use the <b>pooled</b> connection string '
-    '(the one with <b>-pooler</b> in the hostname) for Vercel deployments, as connection pooling is essential for serverless functions that open many short-lived connections.'
-))
-story.append(note(
-    '<b>Important:</b> The connection string contains your database password. Never commit it to Git. Always use environment variables to store it. '
-    'The .env file is already in .gitignore to prevent accidental commits.'
-))
+# ──────────── SECTION 3: DOWNLOAD PROJECT ────────────
+story.append(Paragraph('<b>3. Step 1: Download Your Project</b>', h1_style))
+story.append(Paragraph('Your GoldGem ERP project is located at <font name="DejaVuSans" size="8.5">/home/z/my-project/</font>. You need to download this entire project folder to your local computer. There are several ways to do this depending on your setup. The easiest method is to create a ZIP archive of the project and download it, but you can also use Git to clone the repository if it has been initialized.', body_style))
 
-story.extend(subsection('3.3 Verify Database Connectivity'))
-story.append(para('To verify your Neon database is accessible, you can use the Neon SQL Editor (available in the Neon dashboard sidebar) or connect locally:'))
-story.append(code('psql "postgresql://username:password@ep-xxx.us-east-2.aws.neon.tech/goldgem?sslmode=require"'))
-story.append(para('Run a simple query to confirm the connection:'))
-story.append(code('SELECT version();'))
-story.append(para('You should see a PostgreSQL version string, confirming the database is ready to accept connections.'))
+story.append(Paragraph('<b>Option A: Download as ZIP (Recommended)</b>', h2_style))
+story.append(Paragraph('If you are using this project on a remote server or cloud development environment, the simplest way to get the code is to create a compressed ZIP archive and then download it through the file browser or a download link. This method preserves the entire project structure including all configuration files, the Prisma schema, seed data, and all source code modules. Make sure to exclude the <font name="DejaVuSans" size="8.5">node_modules</font> folder and the <font name="DejaVuSans" size="8.5">.next</font> build folder from the ZIP, as these are very large and will be regenerated automatically when you run npm install and npm build.', body_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 4: Step 2 - Push Code to GitHub
-# ══════════════════════════════════════════════════════════════
-story.extend(section('4. Step 2: Push Code to GitHub'))
-story.append(para(
-    'Vercel deploys directly from your GitHub repository. Before deploying, you need to push your GoldGem ERP code to GitHub. '
-    'This section covers the complete process from initializing a Git repository to pushing to GitHub, including critical pre-deployment steps.'
-))
-
-story.extend(subsection('4.1 Switch to PostgreSQL Schema'))
-story.append(para(
-    'The project uses SQLite for local development by default, but production requires PostgreSQL. '
-    'A PostgreSQL-ready Prisma schema is included at <b>prisma/schema.postgres.prisma</b>. You need to replace the active schema before deploying:'
-))
-story.append(code('cp prisma/schema.postgres.prisma prisma/schema.prisma'))
-story.append(para(
-    'Alternatively, you can use the provided shell script that automates this switch:'
-))
-story.append(code('bash switch-to-neon.sh'))
-story.append(note(
-    '<b>Critical:</b> This step must be done before pushing to GitHub. If you deploy with the SQLite schema, '
-    'the build will fail because SQLite is not supported on Vercel\'s serverless infrastructure. The schema.postgres.prisma file '
-    'is identical to schema.prisma except that the database provider is set to "postgresql" instead of "sqlite".'
-))
-
-story.extend(subsection('4.2 Verify .gitignore'))
-story.append(para('Ensure your <b>.gitignore</b> file includes the following entries to prevent sensitive files from being committed:'))
-story.append(code(
-    'node_modules/\n'
-    '.env\n'
-    '.env.local\n'
-    '.env.production.local\n'
-    'db/\n'
-    '*.db\n'
-    'dev.log\n'
-    'server.log\n'
-    '.next/\n'
-    'prisma/migrations/'
-))
-story.append(para('The <b>.env</b> file contains your local database URL and must never be pushed to GitHub.'))
-
-story.extend(subsection('4.3 Create GitHub Repository and Push'))
-story.append(para('Follow these steps to create a GitHub repository and push your code:'))
-story.append(bullet('1. Go to <b>github.com</b> and click <b>"New Repository"</b>.'))
-story.append(bullet('2. Name it <b>"goldgem-erp"</b> (or any name you prefer).'))
-story.append(bullet('3. Make it <b>Public</b> (required for free Vercel deployment).'))
-story.append(bullet('4. Do NOT initialize with README, .gitignore, or license (we have these already).'))
-story.append(bullet('5. Click <b>"Create Repository"</b>.'))
+story.append(Paragraph('Run this command in the project terminal to create a clean ZIP:', body_style))
+story.append(Paragraph('zip -r goldgem-erp.zip . -x "node_modules/*" -x ".next/*" -x "db/*" -x "*.log"', code_style))
 story.append(Spacer(1, 4))
-story.append(para('Then, from your project directory, run the following Git commands:'))
-story.append(code(
-    'git init\n'
-    'git add .\n'
-    'git commit -m "Initial commit: GoldGem ERP - Global Jewellery Industry ERP System"\n'
-    'git branch -M main\n'
-    'git remote add origin https://github.com/YOUR_USERNAME/goldgem-erp.git\n'
-    'git push -u origin main'
-))
-story.append(note(
-    '<b>Tip:</b> Replace <b>YOUR_USERNAME</b> with your actual GitHub username. If you already have a Git repository initialized, '
-    'you only need to commit the schema change and push: <b>git add . && git commit -m "Switch to PostgreSQL schema" && git push</b>.'
-))
+story.append(Paragraph('After the ZIP is created, download it from the file manager or using the download link provided by your development environment. Once downloaded to your computer, extract it to a folder like <font name="DejaVuSans" size="8.5">C:\\Projects\\goldgem-erp</font> (Windows) or <font name="DejaVuSans" size="8.5">~/Projects/goldgem-erp</font> (Mac/Linux).', body_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 5: Step 3 - Deploy to Vercel
-# ══════════════════════════════════════════════════════════════
-story.extend(section('5. Step 3: Deploy to Vercel'))
-story.append(para(
-    'Vercel is the recommended hosting platform for Next.js applications. It provides seamless integration with GitHub, '
-    'automatic deployments on every push, preview deployments for pull requests, and a generous free tier. '
-    'This section walks you through the complete deployment process.'
-))
+story.append(Paragraph('<b>Option B: Initialize Git and Clone</b>', h2_style))
+story.append(Paragraph('If the project has Git initialized, you can push it directly to GitHub from the development environment and then clone it to your local machine. This is the cleaner approach and sets up version control at the same time. Navigate to the project directory and run the following commands to initialize Git, add all files, commit, and push to your new GitHub repository:', body_style))
+story.append(Paragraph('git init<br/>git add .<br/>git commit -m "Initial commit: GoldGem ERP"<br/>git remote add origin https://github.com/YOUR_USERNAME/goldgem-erp.git<br/>git branch -M main<br/>git push -u origin main', code_style))
 
-story.extend(subsection('5.1 Create a Vercel Account'))
-story.append(bullet('1. Go to <b>vercel.com</b> and click <b>"Sign Up"</b>.'))
-story.append(bullet('2. Choose <b>"Continue with GitHub"</b> to link your GitHub account.'))
-story.append(bullet('3. Authorize Vercel to access your GitHub repositories.'))
-story.append(Spacer(1, 4))
+# ──────────── SECTION 4: NEON POSTGRESQL ────────────
+story.append(Paragraph('<b>4. Step 2: Set Up Neon PostgreSQL Database</b>', h1_style))
+story.append(Paragraph('Neon is a serverless PostgreSQL platform that provides a free tier perfect for project deployments. Unlike traditional databases that run on a single server, Neon separates storage from compute, allowing your database to scale to zero when not in use and wake up instantly when queried. This means you never waste compute resources and your free tier allowance lasts much longer. The setup process takes approximately 3-5 minutes.', body_style))
 
-story.extend(subsection('5.2 Import Your Project'))
-story.append(bullet('1. From the Vercel dashboard, click <b>"Add New..."</b> then <b>"Project"</b>.'))
-story.append(bullet('2. Find <b>"goldgem-erp"</b> in your repository list and click <b>"Import"</b>.'))
-story.append(bullet('3. Configure the project settings on the import page.'))
-story.append(Spacer(1, 4))
-
-story.extend(subsection('5.3 Configure Build Settings'))
-story.append(para('On the "Configure Project" page, set the following values:'))
-story.append(make_table(
-    ['Setting', 'Value', 'Notes'],
-    [
-        ['Framework Preset', 'Next.js', 'Auto-detected'],
-        ['Build Command', 'prisma generate && next build', 'Already in vercel.json'],
-        ['Install Command', 'bun install', 'Already in vercel.json'],
-        ['Output Directory', '.next', 'Default'],
-        ['Node.js Version', '18.x', 'Set in Vercel settings'],
-    ],
-    col_widths=[AW*0.25, AW*0.35, AW*0.40]
-))
+story.append(step_num(1, 'Go to <font name="DejaVuSans" size="8.5">neon.tech</font> and click "Sign Up". You can sign up with your GitHub account, Google account, or email. Using your GitHub account is recommended because it simplifies the connection process later.'))
+story.append(step_num(2, 'After signing in, click "Create Project" on the Neon dashboard. Enter a project name like <font name="DejaVuSans" size="8.5">goldgem-erp</font>. Select the region closest to your target audience (for example, "AWS US East (Ohio)" for North America or "AWS EU West (Frankfurt)" for Europe). Leave the Postgres version at the default (17). Click "Create Project".'))
+story.append(step_num(3, 'Neon will create your database in about 10-15 seconds. Once complete, you will see a connection string displayed on the dashboard. It looks like this:'))
+story.append(Paragraph('postgresql://neondb_owner:AbCdEfGh12345@ep-cool-name-12345678.us-east-2.aws.neon.tech/neondb?sslmode=require', code_style))
+story.append(step_num(4, 'Copy this entire connection string. This is your <font name="DejaVuSans" size="8.5">DATABASE_URL</font> environment variable. You will need it in Steps 4 and 5. Keep it secure and do not share it publicly.'))
 story.append(Spacer(1, 6))
-story.append(note(
-    '<b>Note:</b> The <b>vercel.json</b> file in the project root already specifies the build command and install command. '
-    'Vercel will auto-detect these from the configuration file, so you typically do not need to override them manually.'
-))
+story.append(note_box('The connection string includes ?sslmode=require which is mandatory for Neon. Never remove this parameter or the connection will fail.'))
 
-story.extend(subsection('5.4 Add Environment Variables'))
-story.append(para(
-    'This is the most critical step. You must add your Neon PostgreSQL connection string as an environment variable. '
-    'On the same "Configure Project" page, expand the <b>"Environment Variables"</b> section and add:'
-))
-story.append(make_table(
-    ['Key', 'Value', 'Environments'],
-    [
-        ['DATABASE_URL', 'postgresql://user:pass@ep-xxx.pooler.region.aws.neon.tech/goldgem?sslmode=require', 'Production, Preview, Development'],
-    ],
-    col_widths=[AW*0.20, AW*0.55, AW*0.25]
-))
+# ──────────── SECTION 5: PUSH TO GITHUB ────────────
+story.append(Paragraph('<b>5. Step 3: Push Code to GitHub</b>', h1_style))
+story.append(Paragraph('Vercel deploys directly from your GitHub repository. Before connecting Vercel, you need to ensure your code is pushed to GitHub. If you followed Option B in Step 1, your code is already on GitHub and you can skip to Step 4. If you downloaded the ZIP, follow the instructions below to create a GitHub repository and push your code.', body_style))
+
+story.append(step_num(1, 'Open your web browser and go to <font name="DejaVuSans" size="8.5">github.com/new</font> to create a new repository. Name it <font name="DejaVuSans" size="8.5">goldgem-erp</font>. Set it to Public (required for free Vercel deployment). Do NOT initialize with a README, .gitignore, or license (since the project already has these files). Click "Create Repository".'))
+story.append(step_num(2, 'Open a terminal/command prompt on your computer and navigate to the extracted project folder:'))
+story.append(Paragraph('cd /path/to/goldgem-erp', code_style))
+story.append(step_num(3, 'Initialize Git and push to GitHub:'))
+story.append(Paragraph('git init<br/>git add .<br/>git commit -m "Initial commit: GoldGem ERP"<br/>git remote add origin https://github.com/YOUR_USERNAME/goldgem-erp.git<br/>git branch -M main<br/>git push -u origin main', code_style))
 story.append(Spacer(1, 6))
-story.append(para(
-    'Paste the <b>pooled connection string</b> from the Neon dashboard as the value. The pooled connection (with "-pooler" in the hostname) '
-    'is essential because Vercel serverless functions create many short-lived database connections, and Neon\'s pooler efficiently manages these.'
-))
-story.append(note(
-    '<b>Security:</b> Make sure the "Encrypt" toggle is ON for the DATABASE_URL variable. This ensures the value is encrypted at rest '
-    'and not visible in build logs or the Vercel dashboard after saving.'
-))
+story.append(note_box('Make sure the .gitignore file includes node_modules, .next, .env, and *.log files. The project should already have a proper .gitignore.'))
 
-story.extend(subsection('5.5 Deploy'))
-story.append(para(
-    'Click the <b>"Deploy"</b> button. Vercel will now build and deploy your application. The first deployment typically takes 2-5 minutes. '
-    'You can watch the build logs in real-time on the Vercel dashboard. The build process performs these steps automatically:'
-))
-story.append(bullet('1. <b>Install dependencies</b> - Bun installs all npm packages including Prisma.'))
-story.append(bullet('2. <b>Generate Prisma Client</b> - <b>prisma generate</b> creates the type-safe Prisma Client from your schema.'))
-story.append(bullet('3. <b>Build Next.js</b> - <b>next build</b> compiles the application, optimizes assets, and creates serverless functions for each API route.'))
-story.append(bullet('4. <b>Deploy</b> - Vercel deploys the built output to its global edge network.'))
-story.append(Spacer(1, 4))
-story.append(para(
-    'Once the deployment succeeds, Vercel provides a URL like <b>goldgem-erp-xxxx.vercel.app</b>. Visit this URL to see your application. '
-    'However, the database is empty at this point. The next step will seed it with sample data.'
-))
+# ──────────── SECTION 6: DEPLOY TO VERCEL ────────────
+story.append(Paragraph('<b>6. Step 4: Deploy to Vercel</b>', h1_style))
+story.append(Paragraph('Vercel is the platform created by the team behind Next.js, and it provides the best deployment experience for Next.js applications. When you connect your GitHub repository, Vercel automatically detects that it is a Next.js project, configures the build settings, and deploys your application. Every time you push changes to GitHub, Vercel automatically rebuilds and redeploys your application. The entire initial deployment takes about 2-5 minutes.', body_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 6: Step 4 - Seed the Database
-# ══════════════════════════════════════════════════════════════
-story.extend(section('6. Step 4: Seed the Database'))
-story.append(para(
-    'After deploying, your database is empty. You need to push the schema and seed it with sample data. '
-    'There are two methods to accomplish this: using the Vercel CLI locally, or using the Neon SQL Editor. '
-    'The Vercel CLI method is recommended because it handles the full Prisma migration and seeding workflow.'
-))
+story.append(step_num(1, 'Go to <font name="DejaVuSans" size="8.5">vercel.com</font> and click "Sign Up". Sign up using your GitHub account (this is strongly recommended because it allows Vercel to access your repositories directly).'))
+story.append(step_num(2, 'After signing in, you will see the Vercel dashboard. Click "Add New..." then "Project". You will see a list of your GitHub repositories. Find <font name="DejaVuSans" size="8.5">goldgem-erp</font> and click "Import".'))
+story.append(step_num(3, 'On the "Configure Project" page, you need to add the DATABASE_URL environment variable before deploying. This is critical because without it, the build will fail when Prisma tries to connect to the database. Scroll down to the "Environment Variables" section and add:'))
 
-story.extend(subsection('6.1 Method A: Using Vercel CLI (Recommended)'))
-story.append(para('Install the Vercel CLI and link your project:'))
-story.append(code('npm i -g vercel\nvercel login\nvercel link'))
-story.append(para('Pull the production environment variables to your local machine:'))
-story.append(code('vercel env pull .env.production.local'))
-story.append(para(
-    'This creates a <b>.env.production.local</b> file with the DATABASE_URL from Vercel. Now run the Prisma commands to push the schema and seed:'
-))
-story.append(code(
-    '# Push the database schema to Neon\n'
-    'npx prisma db push\n'
-    '\n'
-    '# Seed the database with sample data\n'
-    'bun run db:seed'
-))
-story.append(para(
-    'The seed script (<b>prisma/seed.ts</b>) populates the database with comprehensive sample data including: 3 users with different roles, '
-    '8 product categories (Gold Necklaces, Diamond Rings, Silver Earrings, Platinum Bracelets, Pearl Collections, Luxury Watches, '
-    'Gemstone Pendants, Bridal Collections), 22 products with realistic global jewellery data, 3 warehouses (New York, London, Dubai), '
-    '25 inventory items, 5 suppliers from around the world, 6 purchase orders, 8 customers, 5 sales orders, 8 POS transactions, '
-    '5 e-commerce orders, and BOM components for manufactured products.'
-))
-story.append(note(
-    '<b>Troubleshooting:</b> If <b>prisma db push</b> fails with a connection error, verify your DATABASE_URL is correct in '
-    '<b>.env.production.local</b>. Ensure you are using the pooled connection string. If <b>bun run db:seed</b> fails, try '
-    '<b>npx prisma db seed</b> instead. Also check that your Neon database is not in a suspended state (Neon auto-suspends after 5 minutes of inactivity on the free tier).'
-))
-
-story.extend(subsection('6.2 Method B: Using Neon SQL Editor'))
-story.append(para(
-    'If you prefer not to use the Vercel CLI, you can push the schema and seed data directly through the Neon dashboard:'
-))
-story.append(bullet('1. Open your Neon project dashboard and click <b>"SQL Editor"</b> in the sidebar.'))
-story.append(bullet('2. First, generate the SQL for your Prisma schema locally:'))
-story.append(code('npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > schema.sql'))
-story.append(bullet('3. Copy the contents of <b>schema.sql</b> and paste it into the Neon SQL Editor.'))
-story.append(bullet('4. Click <b>"Run"</b> to create all database tables.'))
-story.append(bullet('5. To seed data, use the <b>/api/seed</b> endpoint of your deployed application:'))
-story.append(code('curl -X POST https://goldgem-erp-xxxx.vercel.app/api/seed'))
-story.append(para(
-    'This triggers the server-side seed endpoint which populates the database with sample data. The seed API route is included in the application at <b>src/app/api/seed/route.ts</b>.'
-))
-
-# ══════════════════════════════════════════════════════════════
-# SECTION 7: Step 5 - Verify Deployment
-# ══════════════════════════════════════════════════════════════
-story.extend(section('7. Step 5: Verify Your Deployment'))
-story.append(para(
-    'After seeding the database, verify that your application is fully functional by testing each module. '
-    'Visit your Vercel deployment URL and check the following endpoints and features:'
-))
-
-story.extend(subsection('7.1 Health Check'))
-story.append(para('Test the health endpoint to confirm the application is running and the database is connected:'))
-story.append(code('curl https://goldgem-erp-xxxx.vercel.app/api/health'))
-story.append(para('A successful response returns JSON with status "ok" and database connection confirmation.'))
-
-story.extend(subsection('7.2 API Endpoint Verification'))
-story.append(para('Verify each API route returns data correctly:'))
-story.append(make_table(
-    ['Module', 'API Endpoint', 'Expected Response'],
-    [
-        ['Dashboard', '/api/dashboard', 'Summary statistics JSON'],
-        ['Products', '/api/products', 'Array of 22 products'],
-        ['Categories', '/api/categories', 'Array of 8 categories'],
-        ['Inventory', '/api/inventory', 'Inventory items with stock levels'],
-        ['Suppliers', '/api/suppliers', 'Array of 5 global suppliers'],
-        ['Purchase Orders', '/api/purchase-orders', 'Array of 6 POs'],
-        ['Work Orders', '/api/work-orders', 'Work order list'],
-        ['BOM', '/api/bom', 'Bill of Materials data'],
-        ['Warehouses', '/api/warehouses', '3 warehouses (NYC, London, Dubai)'],
-        ['Customers', '/api/customers', 'Array of 8 customers'],
-        ['Sales Orders', '/api/sales-orders', 'Sales order list'],
-        ['Shipments', '/api/shipments', 'Shipment tracking data'],
-        ['POS', '/api/pos', 'POS transaction history'],
-        ['E-Commerce', '/api/ecommerce', 'Online order list'],
-        ['AI Forecast', '/api/ai/forecast', 'Demand forecast data'],
-    ],
-    col_widths=[AW*0.22, AW*0.38, AW*0.40]
-))
+env_data = [
+    [Paragraph('<b>Key</b>', header_cell_style), Paragraph('<b>Value</b>', header_cell_style)],
+    [Paragraph('DATABASE_URL', cell_style), Paragraph('postgresql://neondb_owner:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require', cell_style)],
+]
+story.append(Spacer(1, 6))
+story.append(make_table(env_data, [page_w*0.25, page_w*0.75]))
 story.append(Spacer(1, 6))
 
-story.extend(subsection('7.3 Frontend Module Verification'))
-story.append(para(
-    'Open the application URL in a browser and click through each of the seven modules in the sidebar navigation: '
-    'Dashboard, Manufacturing, Supply Chain, Inventory, POS, E-Commerce, and AI Insights. Each module should display '
-    'real data from the seeded database with interactive charts, tables, and forms. The Dashboard module shows '
-    'aggregate statistics and key performance indicators across all modules.'
-))
-
-# ══════════════════════════════════════════════════════════════
-# SECTION 8: Post-Deployment Configuration
-# ══════════════════════════════════════════════════════════════
-story.extend(section('8. Post-Deployment Configuration'))
-story.append(para(
-    'After successful deployment, consider these additional configuration steps to optimize your application for production use.'
-))
-
-story.extend(subsection('8.1 Custom Domain (Optional)'))
-story.append(para(
-    'Vercel allows you to add a custom domain to your deployment. From your Vercel project dashboard, go to '
-    '<b>Settings > Domains</b> and add your custom domain. You will need to configure DNS records with your domain registrar '
-    'to point to Vercel\'s servers. Vercel automatically provisions SSL certificates via Let\'s Encrypt. '
-    'If you do not have a custom domain, your application is accessible at the default <b>goldgem-erp-xxxx.vercel.app</b> URL.'
-))
-
-story.extend(subsection('8.2 Environment Variables Management'))
-story.append(para(
-    'You can manage environment variables at any time from the Vercel dashboard under <b>Settings > Environment Variables</b>. '
-    'Changes to environment variables require a redeployment to take effect. To redeploy, go to the <b>Deployments</b> tab, '
-    'find the latest deployment, click the three-dot menu, and select <b>"Redeploy"</b>.'
-))
-
-story.extend(subsection('8.3 Automatic Deployments'))
-story.append(para(
-    'Vercel automatically deploys your application every time you push to the <b>main</b> branch on GitHub. '
-    'Pull requests create <b>Preview Deployments</b> with unique URLs, allowing you to test changes before merging. '
-    'This CI/CD workflow ensures your production deployment is always up to date with your latest code.'
-))
-
-story.extend(subsection('8.4 Neon Database Management'))
-story.append(make_table(
-    ['Task', 'How To'],
-    [
-        ['Reset database', 'Run: npx prisma migrate reset (locally with env pulled)'],
-        ['View data', 'Use Neon SQL Editor in the dashboard'],
-        ['Monitor queries', 'Neon Dashboard > Monitoring tab'],
-        ['Check compute usage', 'Neon Dashboard > Home > Compute usage'],
-        ['Suspend/Resume', 'Neon auto-suspends after 5 min idle on free tier'],
-        ['Backup data', 'Neon free tier includes Point-in-Time Recovery (7 days)'],
-    ],
-    col_widths=[AW*0.30, AW*0.70]
-))
+story.append(step_num(4, 'Leave all other settings at their defaults. Vercel will automatically detect the Next.js framework, set the build command to <font name="DejaVuSans" size="8.5">prisma generate && next build</font>, and configure the output directory. Click "Deploy".'))
+story.append(step_num(5, 'Vercel will now build your project. This takes 2-5 minutes for the first build. You can watch the build logs in real time. If the build succeeds, you will see a "Congratulations!" screen with your deployment URL (something like <font name="DejaVuSans" size="8.5">goldgem-erp-abc123.vercel.app</font>).'))
 story.append(Spacer(1, 6))
+story.append(note_box('If the build fails, check the error logs. The most common issue is a missing or incorrect DATABASE_URL. Make sure the connection string is correct and includes ?sslmode=require.'))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 9: Free Tier Limits
-# ══════════════════════════════════════════════════════════════
-story.extend(section('9. Free Tier Limits and Quotas'))
-story.append(para(
-    'Both Vercel and Neon offer generous free tiers, but it is important to understand their limits to avoid unexpected interruptions. '
-    'The following tables summarize the key limitations of each service.'
-))
+# ──────────── SECTION 7: MIGRATIONS ────────────
+story.append(Paragraph('<b>7. Step 5: Run Database Migrations</b>', h1_style))
+story.append(Paragraph('After the first successful deployment, your Vercel application is running but the database is empty. You need to create the database tables by running Prisma migrations. Since Vercel is a serverless platform, you cannot run commands directly on the server. Instead, you run migrations from your local computer, targeting the Neon PostgreSQL database. This is safe because Prisma migrations are designed to be run from any machine as long as they can connect to the database.', body_style))
 
-story.extend(subsection('9.1 Vercel Free Tier'))
-story.append(make_table(
-    ['Resource', 'Limit', 'Impact'],
-    [
-        ['Bandwidth', '100 GB/month', 'Sufficient for demo/academic use'],
-        ['Serverless Function Duration', '10 seconds per invocation', 'All API routes execute within this limit'],
-        ['Serverless Function Invocations', 'Unlimited', 'No cap on request count'],
-        ['Deployment Size', '50 MB', 'Well within our app size'],
-        ['Concurrent Builds', '1 at a time', 'May queue during peak hours'],
-        ['Team Members', '1 (personal account)', 'No collaboration on free tier'],
-    ],
-    col_widths=[AW*0.30, AW*0.25, AW*0.45]
-))
+story.append(step_num(1, 'On your local computer, navigate to the project folder in your terminal:'))
+story.append(Paragraph('cd /path/to/goldgem-erp', code_style))
+
+story.append(step_num(2, 'Install the project dependencies (if you have not already):'))
+story.append(Paragraph('npm install', code_style))
+
+story.append(step_num(3, 'Create or update the <font name="DejaVuSans" size="8.5">.env</font> file in the project root with your Neon DATABASE_URL:'))
+story.append(Paragraph('DATABASE_URL="postgresql://neondb_owner:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"', code_style))
+
+story.append(step_num(4, 'Run Prisma db push to create all tables in the Neon database:'))
+story.append(Paragraph('npx prisma db push', code_style))
+story.append(Paragraph('This command reads your Prisma schema and creates all the tables (User, Product, Warehouse, Supplier, etc.) in your Neon PostgreSQL database. You should see output confirming that the tables were created successfully. The <font name="DejaVuSans" size="8.5">prisma db push</font> command is preferred over <font name="DejaVuSans" size="8.5">prisma migrate dev</font> for initial setup because it does not require a migration history folder.', body_style))
 story.append(Spacer(1, 6))
+story.append(note_box('Make sure your local .env DATABASE_URL matches the one you set in Vercel. Both should point to the same Neon database.'))
 
-story.extend(subsection('9.2 Neon Free Tier'))
-story.append(make_table(
-    ['Resource', 'Limit', 'Impact'],
-    [
-        ['Storage', '0.5 GB', 'Plenty for sample data (~5 MB used)'],
-        ['Compute Hours', '100 hours/month', 'Auto-suspends when idle to preserve hours'],
-        ['Row Limit', 'No hard limit', 'Only storage constraint applies'],
-        ['Branches', '10 branches', 'Useful for testing schema changes'],
-        ['Auto-Suspend', '5 minutes of inactivity', 'Cold start ~1-2 seconds on first query'],
-        ['Connections', 'Via pooler only', 'Pooled connection string required'],
-    ],
-    col_widths=[AW*0.30, AW*0.25, AW*0.45]
-))
-story.append(Spacer(1, 6))
+# ──────────── SECTION 8: SEED ────────────
+story.append(Paragraph('<b>8. Step 6: Seed Your Database</b>', h1_style))
+story.append(Paragraph('Your database now has all the tables but no data. The seed script will populate it with realistic sample data including products (gold chains, diamond rings, silver earrings, platinum bracelets, pearl collections, luxury watches, gemstone pendants, and bridal collections), warehouses in New York, London, and Dubai, suppliers from Switzerland, Belgium, Italy, Tahiti, and Colombia, purchase orders, sales orders, POS transactions, e-commerce orders, and AI demand forecasts. This gives your deployed application a complete, professional-looking demo.', body_style))
 
-story.append(note(
-    '<b>Cold Start Note:</b> Neon auto-suspends your database after 5 minutes of inactivity on the free tier. The first request after '
-    'suspension takes 1-2 seconds (cold start) as the database wakes up. Subsequent requests are fast. This is normal behavior for '
-    'serverless databases and does not indicate a problem. You can upgrade to a paid plan for always-on compute if needed.'
-))
+story.append(step_num(1, 'From your local terminal (in the project folder with .env configured), run the seed command:'))
+story.append(Paragraph('npx prisma db seed', code_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 10: Troubleshooting
-# ══════════════════════════════════════════════════════════════
-story.extend(section('10. Troubleshooting'))
-story.append(para(
-    'This section covers common issues you may encounter during deployment and their solutions. '
-    'Most deployment failures are caused by schema mismatches, missing environment variables, or database connection issues.'
-))
+story.append(step_num(2, 'Wait for the seeding to complete. You should see console output like "Seeding GoldGem ERP database..." followed by "Creating categories...", "Creating products...", etc. The entire seeding process takes about 10-30 seconds depending on your internet connection speed to the Neon database.'))
 
-story.extend(subsection('10.1 Build Failures'))
-story.append(make_table(
-    ['Error', 'Cause', 'Solution'],
-    [
-        ['"prisma generate" fails', 'SQLite schema deployed to Vercel', 'Run: cp prisma/schema.postgres.prisma prisma/schema.prisma, then push again'],
-        ['TypeScript build errors', 'Type mismatch in components', 'Already handled by ignoreBuildErrors: true in next.config.ts'],
-        ['"bun install" fails', 'Package resolution issue', 'Try deleting bun.lock and running bun install again'],
-        ['Out of memory during build', 'Large dependency tree', 'Reduce dependencies or use Vercel build cache'],
-        ['Module not found', 'Missing import or broken path', 'Check that all imports resolve correctly in the codebase'],
-    ],
-    col_widths=[AW*0.22, AW*0.33, AW*0.45]
-))
-story.append(Spacer(1, 6))
+story.append(step_num(3, 'To verify the data was seeded correctly, you can check using Prisma Studio:'))
+story.append(Paragraph('npx prisma studio', code_style))
+story.append(Paragraph('This opens a web-based database browser at <font name="DejaVuSans" size="8.5">http://localhost:5555</font> where you can view all the tables and data. You should see 22 products, 3 warehouses, 5 suppliers, 8 customers, 6 purchase orders, 5 sales orders, 8 POS transactions, and 5 e-commerce orders. Close Prisma Studio when done by pressing Ctrl+C in the terminal.', body_style))
 
-story.extend(subsection('10.2 Runtime Errors'))
-story.append(make_table(
-    ['Error', 'Cause', 'Solution'],
-    [
-        ['500 Internal Server Error', 'Database not seeded or connection failed', 'Check DATABASE_URL env var and run seed'],
-        ['"P1001: Can\'t reach database server"', 'Wrong connection string or DB suspended', 'Verify Neon connection string; wait for cold start'],
-        ['Empty page / no data', 'Database not seeded', 'Run: bun run db:seed or curl POST /api/seed'],
-        ['CORS errors', 'Not typically an issue with Vercel', 'Check API route headers configuration'],
-        ['Slow first request', 'Neon cold start', 'Normal on free tier; 1-2 second warm-up'],
-    ],
-    col_widths=[AW*0.22, AW*0.33, AW*0.45]
-))
-story.append(Spacer(1, 6))
+# ──────────── SECTION 9: VERIFY ────────────
+story.append(Paragraph('<b>9. Step 7: Verify Deployment</b>', h1_style))
+story.append(Paragraph('Now that your application is deployed and the database is seeded, it is time to verify everything is working correctly. Open your web browser and navigate to the Vercel deployment URL (e.g., <font name="DejaVuSans" size="8.5">goldgem-erp-abc123.vercel.app</font>). You should see the GoldGem ERP dashboard loading with sample data.', body_style))
 
-story.extend(subsection('10.3 Common Solutions'))
-story.append(para('<b>Redeploying after changes:</b>'))
-story.append(code(
-    '# Push changes to GitHub (triggers auto-deploy)\n'
-    'git add .\n'
-    'git commit -m "Fix: description of change"\n'
-    'git push origin main'
-))
-story.append(Spacer(1, 6))
-story.append(para('<b>Re-seeding the database:</b>'))
-story.append(code(
-    '# Pull production env vars\n'
-    'vercel env pull .env.production.local\n'
-    '\n'
-    '# Reset and re-seed\n'
-    'npx prisma migrate reset\n'
-    'bun run db:seed'
-))
-story.append(Spacer(1, 6))
-story.append(para('<b>Checking Vercel build logs:</b>'))
-story.append(para(
-    'Go to your Vercel dashboard, click on the project, then click on the latest deployment. '
-    'The "Build Logs" section shows detailed output from each build step. Expand any failed step to see the exact error message. '
-    'The "Function Logs" section shows runtime errors from your API routes.'
-))
+story.append(Paragraph('Check the following features to confirm everything is working:', body_style))
+verify_items = [
+    'Dashboard loads with KPI cards showing revenue, orders, and inventory metrics',
+    'Navigate to each module using the sidebar: Manufacturing, Supply Chain, Inventory, POS, E-Commerce, AI Insights',
+    'The Inventory module should show products across warehouses in New York, London, and Dubai',
+    'The POS module should display recent transactions with jewellery items',
+    'The E-Commerce module should show online orders from customers worldwide',
+    'The Supply Chain module should show purchase orders from international suppliers',
+]
+for item in verify_items:
+    story.append(Paragraph(f'<bullet>&bull;</bullet> {item}', bullet_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 11: Quick Reference
-# ══════════════════════════════════════════════════════════════
-story.extend(section('11. Quick Reference: Deployment Commands'))
-story.append(para('Here is a consolidated list of all commands used during the deployment process:'))
+story.append(Spacer(1, 8))
+story.append(Paragraph('If any page shows an error or fails to load data, check the Vercel deployment logs at <font name="DejaVuSans" size="8.5">vercel.com/dashboard</font> then click on your project and go to the "Deployments" tab. Click on the latest deployment to see the build and runtime logs. The most common runtime error is a database connection issue, which is almost always caused by an incorrect or missing DATABASE_URL environment variable.', body_style))
 
-story.extend(subsection('11.1 Pre-Deployment (Local)'))
-story.append(code(
-    '# Switch to PostgreSQL schema\n'
-    'cp prisma/schema.postgres.prisma prisma/schema.prisma\n'
-    '\n'
-    '# Initialize Git repository\n'
-    'git init\n'
-    'git add .\n'
-    'git commit -m "Initial commit: GoldGem ERP"\n'
-    '\n'
-    '# Push to GitHub\n'
-    'git branch -M main\n'
-    'git remote add origin https://github.com/YOUR_USERNAME/goldgem-erp.git\n'
-    'git push -u origin main'
-))
-story.append(Spacer(1, 6))
+# ──────────── SECTION 10: ENV VARIABLES ────────────
+story.append(Paragraph('<b>10. Environment Variables Reference</b>', h1_style))
+story.append(Paragraph('Your GoldGem ERP project uses the following environment variables. The DATABASE_URL is the only required variable for production deployment. It must be set both in your local .env file (for running migrations and seeds) and in the Vercel project settings (for the deployed application to connect to the database). The connection string format for Neon PostgreSQL always includes the sslmode=require parameter because Neon requires encrypted connections.', body_style))
 
-story.extend(subsection('11.2 Post-Deployment (Database Setup)'))
-story.append(code(
-    '# Install Vercel CLI\n'
-    'npm i -g vercel\n'
-    'vercel login\n'
-    'vercel link\n'
-    '\n'
-    '# Pull production environment variables\n'
-    'vercel env pull .env.production.local\n'
-    '\n'
-    '# Push schema to Neon PostgreSQL\n'
-    'npx prisma db push\n'
-    '\n'
-    '# Seed the database with sample data\n'
-    'bun run db:seed\n'
-    '\n'
-    '# Verify deployment\n'
-    'curl https://goldgem-erp-xxxx.vercel.app/api/health'
-))
-story.append(Spacer(1, 6))
+env_ref_data = [
+    [Paragraph('<b>Variable</b>', header_cell_style), Paragraph('<b>Required</b>', header_cell_style), Paragraph('<b>Description</b>', header_cell_style), Paragraph('<b>Example</b>', header_cell_style)],
+    [Paragraph('DATABASE_URL', cell_style), Paragraph('Yes', cell_center_style), Paragraph('Neon PostgreSQL connection string', cell_style), Paragraph('postgresql://user:pass@ep-xxx.neon.tech/db?sslmode=require', cell_style)],
+]
+story.append(Spacer(1, 8))
+story.append(make_table(env_ref_data, [page_w*0.17, page_w*0.12, page_w*0.35, page_w*0.36]))
+story.append(Spacer(1, 8))
+story.append(Paragraph('<b>How to update environment variables on Vercel:</b> Go to your project dashboard on Vercel, click "Settings" tab, then "Environment Variables" in the left sidebar. You can add, edit, or remove variables here. After changing any variable, you must trigger a new deployment for the changes to take effect. You can do this by clicking "Redeploy" on the Deployments tab, or by pushing a new commit to GitHub.', body_style))
 
-story.extend(subsection('11.3 Useful Vercel CLI Commands'))
-story.append(code(
-    '# View deployment logs\n'
-    'vercel logs\n'
-    '\n'
-    '# List all deployments\n'
-    'vercel ls\n'
-    '\n'
-    '# Deploy manually (if auto-deploy fails)\n'
-    'vercel --prod\n'
-    '\n'
-    '# Open project in browser\n'
-    'vercel open\n'
-    '\n'
-    '# Remove a deployment\n'
-    'vercel remove goldgem-erp-xxxx'
-))
+# ──────────── SECTION 11: TROUBLESHOOTING ────────────
+story.append(Paragraph('<b>11. Troubleshooting Common Issues</b>', h1_style))
+story.append(Paragraph('This section covers the most common issues you might encounter during deployment and how to resolve them. Most deployment problems fall into one of three categories: build errors, database connection errors, or runtime errors. The Vercel deployment logs are your primary debugging tool; they show both the build output and the serverless function logs.', body_style))
 
-# ══════════════════════════════════════════════════════════════
-# SECTION 12: Alternative Platforms
-# ══════════════════════════════════════════════════════════════
-story.extend(section('12. Alternative Cloud Platforms'))
-story.append(para(
-    'While Vercel + Neon is the recommended deployment stack for GoldGem ERP, you can also deploy to other platforms. '
-    'The following alternatives also offer free tiers and support Next.js applications with PostgreSQL databases.'
-))
+story.append(Paragraph('<b>Build Error: "prisma generate" fails</b>', h2_style))
+story.append(Paragraph('If the build fails during the <font name="DejaVuSans" size="8.5">prisma generate</font> step, it usually means the Prisma schema has a syntax error or the Prisma version is incompatible. Make sure your <font name="DejaVuSans" size="8.5">schema.prisma</font> file has <font name="DejaVuSans" size="8.5">provider = "postgresql"</font> (not "sqlite"). Also ensure the <font name="DejaVuSans" size="8.5">postinstall</font> script in package.json includes <font name="DejaVuSans" size="8.5">prisma generate</font>. Check that the Prisma version in package.json is 6.x or later.', body_style))
 
-story.extend(subsection('12.1 Railway'))
-story.append(para(
-    'Railway (railway.app) provides a simpler deployment experience with built-in PostgreSQL. It auto-detects Next.js projects '
-    'and handles build configuration automatically. The free tier includes $5/month in credits, which is typically sufficient for '
-    'a small project. However, Railway does not offer a permanent free tier like Vercel, and credits may run out with moderate usage. '
-    'To deploy on Railway, create a new project, connect your GitHub repository, add the PostgreSQL plugin, and set the DATABASE_URL '
-    'environment variable. Railway handles the rest automatically.'
-))
+story.append(Paragraph('<b>Runtime Error: "P1001: Can\'t reach database server"</b>', h2_style))
+story.append(Paragraph('This means the application cannot connect to the Neon database. Check the following: (1) The DATABASE_URL environment variable is set correctly in Vercel Settings, (2) The connection string includes <font name="DejaVuSans" size="8.5">?sslmode=require</font> at the end, (3) The Neon project is active (not suspended due to inactivity; you can wake it up by visiting the Neon dashboard), and (4) Your IP address is not blocked by Neon (Neon does not restrict IPs by default, but corporate firewalls might block the connection).', body_style))
 
-story.extend(subsection('12.2 Render'))
-story.append(para(
-    'Render (render.com) offers free web services with PostgreSQL. The free tier includes 750 hours/month of runtime (enough for one '
-    'always-on instance) and a free PostgreSQL database that expires after 90 days. This makes Render suitable for short-term demos but '
-    'not ideal for long-running projects. To deploy on Render, create a new Web Service, connect your GitHub repo, set the build command '
-    'to "prisma generate && next build", the start command to "next start", and add the DATABASE_URL environment variable from the '
-    'Render PostgreSQL instance. Note that free tier services on Render spin down after 15 minutes of inactivity, causing a 30-60 second '
-    'cold start on the next request.'
-))
+story.append(Paragraph('<b>Runtime Error: "Table does not exist"</b>', h2_style))
+story.append(Paragraph('This means you have not run the database migration. Follow Step 5 to run <font name="DejaVuSans" size="8.5">npx prisma db push</font> from your local computer. Make sure your local .env DATABASE_URL points to the same Neon database that Vercel is using. After running the migration, the tables will be created and the application should work immediately without needing to redeploy.', body_style))
 
-story.extend(subsection('12.3 Platform Comparison'))
-story.append(make_table(
-    ['Feature', 'Vercel + Neon', 'Railway', 'Render'],
-    [
-        ['Free Tier', 'Permanent', '$5/month credits', '750 hrs/month'],
-        ['Database', 'Neon (0.5 GB)', 'Built-in PostgreSQL', 'Free DB (90-day expiry)'],
-        ['Cold Start', '~1-2s (Neon)', '~1s', '~30-60s'],
-        ['Custom Domain', 'Yes (free)', 'Yes (paid only)', 'Yes (free)'],
-        ['Auto-Deploy', 'Yes', 'Yes', 'Yes'],
-        ['Best For', 'Academic / Demo', 'Simplicity', 'Short-term Demo'],
-    ],
-    col_widths=[AW*0.22, AW*0.26, AW*0.26, AW*0.26]
-))
-story.append(Spacer(1, 6))
+story.append(Paragraph('<b>Build Error: "Type error" or TypeScript errors</b>', h2_style))
+story.append(Paragraph('The project has <font name="DejaVuSans" size="8.5">ignoreBuildErrors: true</font> set in next.config.ts, which means TypeScript errors should not block the build. If you still see TypeScript-related build failures, check that the <font name="DejaVuSans" size="8.5">next.config.ts</font> file is correctly configured. You can also try running <font name="DejaVuSans" size="8.5">npm run build</font> locally first to identify any issues before deploying.', body_style))
 
-# ══════════════════════════════════════════════════════════════
-# BUILD
-# ══════════════════════════════════════════════════════════════
-doc.multiBuild(story)
-print(f"PDF generated: {output_path}")
+story.append(Paragraph('<b>Blank page / White screen after deployment</b>', h2_style))
+story.append(Paragraph('A blank page usually means a JavaScript runtime error. Open your browser\'s Developer Tools (F12) and check the Console tab for error messages. Common causes include: missing environment variables, API routes returning 500 errors due to database issues, or browser caching old assets (try a hard refresh with Ctrl+Shift+R). If the API routes are failing, check the Vercel function logs under the "Functions" tab in your deployment details.', body_style))
+
+# ──────────── SECTION 12: FREE TIER LIMITS ────────────
+story.append(Paragraph('<b>12. Free Tier Limits and Tips</b>', h1_style))
+story.append(Paragraph('Both Vercel and Neon offer generous free tiers that are more than sufficient for a college project demonstration. However, it is important to understand the limits so your deployment stays active and functional throughout your project evaluation period. The following table summarizes the key limits you should be aware of, along with practical tips to stay within them.', body_style))
+
+limits_data = [
+    [Paragraph('<b>Service</b>', header_cell_style), Paragraph('<b>Limit</b>', header_cell_style), Paragraph('<b>What This Means</b>', header_cell_style), Paragraph('<b>Tip</b>', header_cell_style)],
+    [Paragraph('Vercel Bandwidth', cell_style), Paragraph('100 GB/month', cell_center_style), Paragraph('Data transfer to visitors', cell_style), Paragraph('More than enough for a demo', cell_style)],
+    [Paragraph('Vercel Builds', cell_style), Paragraph('6000 min/month', cell_center_style), Paragraph('Build time for deployments', cell_style), Paragraph('Each build takes 2-5 min', cell_style)],
+    [Paragraph('Vercel Functions', cell_style), Paragraph('10 sec timeout', cell_center_style), Paragraph('API route max execution time', cell_style), Paragraph('Prisma cold start may be slow', cell_style)],
+    [Paragraph('Neon Storage', cell_style), Paragraph('0.5 GB', cell_center_style), Paragraph('Database size limit', cell_style), Paragraph('Seed data uses less than 5 MB', cell_style)],
+    [Paragraph('Neon Compute', cell_style), Paragraph('100 hrs/month', cell_center_style), Paragraph('Active compute time', cell_style), Paragraph('Auto-suspends when idle', cell_style)],
+    [Paragraph('Neon Auto-suspend', cell_style), Paragraph('5 min idle', cell_center_style), Paragraph('Pauses after inactivity', cell_style), Paragraph('First request after pause takes 1-2 sec', cell_style)],
+]
+story.append(Spacer(1, 8))
+story.append(make_table(limits_data, [page_w*0.16, page_w*0.16, page_w*0.32, page_w*0.36]))
+story.append(Spacer(1, 12))
+
+story.append(Paragraph('<b>Keeping Your Deployment Active</b>', h2_style))
+story.append(Paragraph('Neon automatically suspends your database after 5 minutes of inactivity to save compute hours. When a request comes in while the database is suspended, Neon wakes it up automatically, but the first request may take 1-2 seconds longer than usual. This is called a "cold start" and is perfectly normal for serverless databases. For a project demonstration, this delay is negligible. If you need instant responses during a presentation, simply open the application URL a few minutes before the demo to warm up the database connection.', body_style))
+story.append(Paragraph('Vercel deployments do not expire. As long as your Vercel account is active, your deployment will remain accessible at its assigned URL. You can also connect a custom domain if you have one, though this is not necessary for a college project. If you want to update your application after the initial deployment, simply push new commits to the GitHub repository and Vercel will automatically rebuild and redeploy within minutes.', body_style))
+
+# ── Build PDF ──
+doc.build(story)
+print(f"PDF generated successfully: {output_path}")
