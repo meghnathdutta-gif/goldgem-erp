@@ -1,53 +1,114 @@
-import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
 export async function GET() {
   try {
-    const forecasts = await db.demandForecast.findMany({ include: { product: true }, orderBy: [{ productId: 'asc' }, { period: 'asc' }] })
-
-    const forecastByProduct: Record<string, { period: string; predictedDemand: number; confidence: number; model: string; productName: string }[]> = {}
-    for (const f of forecasts) {
-      if (!forecastByProduct[f.productId]) forecastByProduct[f.productId] = []
-      forecastByProduct[f.productId].push({ period: f.period, predictedDemand: f.predictedDemand, confidence: f.confidence, model: f.model, productName: f.product.name })
-    }
-
-    // Inventory Optimization
-    const inventoryItems = await db.inventoryItem.findMany({ include: { product: true, warehouse: true }, where: { quantity: { lte: 50 } } })
-    const optimizationSuggestions = inventoryItems.map(item => {
-      const avgDemand = 15 + Math.floor(Math.random() * 20)
-      const leadTime = 7
-      const safetyStock = Math.ceil(avgDemand * leadTime * 0.5)
-      const reorderPoint = Math.ceil(avgDemand * leadTime + safetyStock)
-      const suggestedOrderQty = Math.max(0, reorderPoint * 3 - item.quantity)
-      return {
-        product: item.product.name, warehouse: item.warehouse.name, currentStock: item.quantity,
-        avgDailyDemand: avgDemand, leadTimeDays: leadTime, safetyStock, reorderPoint, suggestedOrderQty,
-        status: item.quantity <= item.reorderPoint ? 'critical' : item.quantity <= item.reorderPoint * 1.5 ? 'warning' : 'ok',
-      }
+    // --- Demand Forecasts ---
+    const forecasts = await db.demandForecast.findMany({
+      include: {
+        product: {
+          select: { id: true, name: true, sku: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
     })
 
-    // Sales Trend
-    const recentTrx = await db.posTransaction.findMany({ where: { status: 'completed' }, orderBy: { createdAt: 'desc' }, take: 100, include: { items: true } })
-    const revenueByDay: Record<string, number> = {}
-    for (const trx of recentTrx) {
-      const day = new Date(trx.createdAt).toISOString().split('T')[0]
-      revenueByDay[day] = (revenueByDay[day] || 0) + trx.totalAmount
-    }
-    const salesTrend = Object.entries(revenueByDay).map(([date, revenue]) => ({ date, revenue: Math.round(revenue) })).sort((a, b) => a.date.localeCompare(b.date))
+    // Group forecasts by product
+    const forecastMap = new Map<
+      string,
+      {
+        productId: string
+        productName: string
+        sku: string
+        forecasts: {
+          id: string
+          period: string
+          predictedDemand: number
+          confidence: number
+          model: string
+          createdAt: string
+        }[]
+      }
+    >()
 
-    // Anomalies
-    const allProducts = await db.product.findMany({ include: { inventoryItems: true } })
-    const anomalies: { type: string; product: string; severity: string; message: string }[] = []
-    for (const product of allProducts) {
-      const totalStock = product.inventoryItems.reduce((sum, i) => sum + i.quantity, 0)
-      if (totalStock === 0) anomalies.push({ type: 'out_of_stock', product: product.name, severity: 'critical', message: `${product.name} is completely out of stock` })
-      else if (totalStock < product.minStockLevel) anomalies.push({ type: 'low_stock', product: product.name, severity: 'warning', message: `${product.name} is below minimum stock level (${totalStock} < ${product.minStockLevel})` })
+    for (const f of forecasts) {
+      if (!forecastMap.has(f.productId)) {
+        forecastMap.set(f.productId, {
+          productId: f.productId,
+          productName: f.product.name,
+          sku: f.product.sku,
+          forecasts: [],
+        })
+      }
+      forecastMap.get(f.productId)!.forecasts.push({
+        id: f.id,
+        period: f.period,
+        predictedDemand: f.predictedDemand,
+        confidence: f.confidence,
+        model: f.model,
+        createdAt: f.createdAt.toISOString(),
+      })
     }
 
-    return NextResponse.json({ forecastByProduct, optimizationSuggestions, salesTrend, anomalies })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const demandForecasts = Array.from(forecastMap.values())
+
+    // --- Inventory Optimization ---
+    // Find inventory items where quantity <= reorderPoint
+    const lowStockItems = await db.inventoryItem.findMany({
+      where: {
+        quantity: { lte: db.inventoryItem.fields.reorderPoint },
+      },
+      include: {
+        product: {
+          select: { id: true, name: true, sku: true },
+        },
+      },
+    })
+
+    const inventoryOptimization = lowStockItems.map((item) => ({
+      productId: item.productId,
+      productName: item.product.name,
+      currentStock: item.quantity,
+      reorderPoint: item.reorderPoint,
+      suggestedQty: Math.max(0, item.reorderPoint * 2 - item.quantity),
+    }))
+
+    // --- Anomaly Detection ---
+    // Find items with quantity = 0 (out of stock) or quantity <= reorderPoint * 0.5 (critical low)
+    const allInventoryItems = await db.inventoryItem.findMany({
+      include: {
+        product: {
+          select: { id: true, name: true },
+        },
+        warehouse: {
+          select: { id: true, name: true },
+        },
+      },
+    })
+
+    const anomalyDetection = allInventoryItems
+      .filter((item) => item.quantity === 0 || item.quantity <= item.reorderPoint * 0.5)
+      .map((item) => ({
+        inventoryItemId: item.id,
+        productId: item.productId,
+        productName: item.product.name,
+        warehouseName: item.warehouse.name,
+        quantity: item.quantity,
+        severity: item.quantity === 0 ? 'out_of_stock' as const : 'critical_low' as const,
+        reorderPoint: item.reorderPoint,
+      }))
+
+    return NextResponse.json({
+      demandForecasts,
+      inventoryOptimization,
+      anomalyDetection,
+    })
+  } catch (error) {
+    console.error('AI Forecast GET error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch AI insights' },
+      { status: 500 }
+    )
   }
 }
 
@@ -56,24 +117,112 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { productId } = body
 
-    await db.demandForecast.deleteMany({ where: { productId } })
-
-    const posItems = await db.posTransactionItem.findMany({ where: { productId }, include: { posTransaction: true } })
-
-    for (let m = 0; m < 3; m++) {
-      const period = `2026-${String(m + 5).padStart(2, '0')}`
-      const historicalDemand = posItems.reduce((sum, item) => sum + item.quantity, 0)
-      const avgMonthlyDemand = Math.max(10, Math.floor(historicalDemand / 3))
-      const predictedDemand = Math.floor(avgMonthlyDemand * (1 + (Math.random() * 0.3 - 0.1)))
-      const confidence = Math.min(0.95, 0.5 + posItems.length * 0.05)
-
-      await db.demandForecast.create({ data: { productId, period, predictedDemand, confidence, model: 'moving_avg' } })
+    if (!productId) {
+      return NextResponse.json(
+        { error: 'Missing required field: productId' },
+        { status: 400 }
+      )
     }
 
-    const forecasts = await db.demandForecast.findMany({ where: { productId }, include: { product: true } })
-    return NextResponse.json(forecasts, { status: 201 })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    // Verify product exists
+    const product = await db.product.findUnique({
+      where: { id: productId },
+    })
+
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      )
+    }
+
+    // Find recent POS transactions that include this product
+    // Since items is stored as a JSON string, we need to fetch and filter in memory
+    const recentTransactions = await db.posTransaction.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1),
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Extract sales quantities for this product from POS transactions
+    let totalDemand = 0
+    let transactionCount = 0
+
+    for (const tx of recentTransactions) {
+      try {
+        const txItems = JSON.parse(tx.items) as Array<{
+          productId: string
+          quantity: number
+        }>
+        const matchingItem = txItems.find((item) => item.productId === productId)
+        if (matchingItem) {
+          totalDemand += matchingItem.quantity
+          transactionCount++
+        }
+      } catch {
+        // Skip malformed JSON
+        continue
+      }
+    }
+
+    // Compute average monthly demand
+    // Use number of months with data, or 1 to avoid division by zero
+    const monthsWithData = Math.max(1, Math.min(transactionCount, 6))
+    const avgMonthlyDemand = totalDemand / monthsWithData
+
+    // Generate 3 monthly forecasts with decreasing confidence
+    const confidenceLevels = [0.85, 0.75, 0.65]
+    const now = new Date()
+    const forecastData = confidenceLevels.map((confidence, index) => {
+      const forecastDate = new Date(now.getFullYear(), now.getMonth() + index + 1, 1)
+      const period = `${forecastDate.getFullYear()}-${String(forecastDate.getMonth() + 1).padStart(2, '0')}`
+      return {
+        productId,
+        period,
+        predictedDemand: Math.round(avgMonthlyDemand * 100) / 100,
+        confidence,
+        model: 'MovingAverage',
+      }
+    })
+
+    const createdForecasts = await db.demandForecast.createMany({
+      data: forecastData,
+    })
+
+    // Fetch the newly created forecasts to return
+    const newForecasts = await db.demandForecast.findMany({
+      where: {
+        productId,
+        model: 'MovingAverage',
+      },
+      include: {
+        product: {
+          select: { id: true, name: true, sku: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Return only the ones we just created (last 3)
+    const latestForecasts = newForecasts.slice(0, 3)
+
+    return NextResponse.json(
+      {
+        product: { id: product.id, name: product.name, sku: product.sku },
+        averageMonthlyDemand: Math.round(avgMonthlyDemand * 100) / 100,
+        transactionsAnalyzed: transactionCount,
+        forecasts: latestForecasts,
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error('AI Forecast POST error:', error)
+    return NextResponse.json(
+      { error: 'Failed to generate forecast' },
+      { status: 500 }
+    )
   }
 }

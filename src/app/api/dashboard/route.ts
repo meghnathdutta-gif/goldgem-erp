@@ -1,85 +1,153 @@
-import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
 export async function GET() {
   try {
-    const totalProducts = await db.product.count()
+    // KPIs
+    const posTransactions = await db.posTransaction.findMany({
+      select: { total: true, createdAt: true },
+    })
+    const ecommerceOrders = await db.ecommerceOrder.findMany({
+      select: { totalAmount: true, createdAt: true },
+    })
+    const salesOrderCount = await db.salesOrder.count()
+    const inventoryItems = await db.inventoryItem.findMany({
+      include: { product: { select: { costPrice: true, price: true } } },
+    })
+    const activeWorkOrders = await db.workOrder.count({
+      where: { status: 'in_progress' },
+    })
+    const pendingShipments = await db.shipment.count({
+      where: { status: { in: ['pending', 'shipped'] } },
+    })
+    const totalDesigns = await db.product.count()
     const totalCustomers = await db.customer.count()
-    const activeWorkOrders = await db.workOrder.count({ where: { status: { in: ['planned', 'in_progress'] } } })
-    const pendingShipments = await db.shipment.count({ where: { status: { in: ['pending', 'shipped', 'in_transit'] } } })
-    const lowStockItems = await db.inventoryItem.count({ where: { quantity: { lte: 10 } } })
 
-    const posRevenue = await db.posTransaction.aggregate({ _sum: { totalAmount: true }, where: { status: 'completed' } })
-    const soRevenue = await db.salesOrder.aggregate({ _sum: { totalAmount: true }, where: { status: { not: 'cancelled' } } })
-    const ecoRevenue = await db.ecommerceOrder.aggregate({ _sum: { totalAmount: true }, where: { status: { not: 'cancelled' } } })
+    // Compute KPIs
+    const posRevenue = posTransactions.reduce((sum, t) => sum + t.total, 0)
+    const ecoRevenue = ecommerceOrders.reduce((sum, o) => sum + o.totalAmount, 0)
+    const totalRevenue = posRevenue + ecoRevenue
+    const totalOrders = posTransactions.length + ecommerceOrders.length + salesOrderCount
+    const vaultValue = inventoryItems.reduce(
+      (sum, item) => sum + item.quantity * item.product.costPrice,
+      0
+    )
+    const lowStockAlerts = inventoryItems.filter(
+      (item) => item.quantity <= item.reorderPoint
+    ).length
 
-    const totalRevenue = (posRevenue._sum.totalAmount || 0) + (soRevenue._sum.totalAmount || 0) + (ecoRevenue._sum.totalAmount || 0)
-    const totalOrders = await db.salesOrder.count() + await db.posTransaction.count() + await db.ecommerceOrder.count()
+    const kpis = {
+      totalRevenue,
+      totalOrders,
+      vaultValue,
+      activeWorkOrders,
+      pendingShipments,
+      lowStockAlerts,
+      totalDesigns,
+      totalCustomers,
+    }
 
-    const inventoryItems = await db.inventoryItem.findMany({ include: { product: true } })
-    const inventoryValue = inventoryItems.reduce((sum, item) => sum + (item.quantity * item.product.costPrice), 0)
-
-    // Revenue by month (evenly distributed from actual total)
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-    const revenueByMonth: Record<string, number> = {}
-    const base = totalRevenue / 6
-    const weights = [0.7, 0.85, 1.0, 1.1, 0.95, 1.2]
-    for (let i = 0; i < 6; i++) {
-      revenueByMonth[monthNames[i]] = Math.round(base * weights[i])
+    // Revenue Chart - last 6 months (computed in JS from fetched data)
+    const now = new Date()
+    const revenueChart = []
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1)
+      const monthLabel = monthStart.toLocaleString('default', {
+        month: 'short',
+        year: 'numeric',
+      })
+      const posRev = posTransactions
+        .filter((t) => t.createdAt >= monthStart && t.createdAt < monthEnd)
+        .reduce((sum, t) => sum + t.total, 0)
+      const ecoRev = ecommerceOrders
+        .filter((o) => o.createdAt >= monthStart && o.createdAt < monthEnd)
+        .reduce((sum, o) => sum + o.totalAmount, 0)
+      revenueChart.push({ month: monthLabel, revenue: posRev + ecoRev })
     }
 
     // Sales by Category
-    const categories = await db.category.findMany({ include: { products: { include: { inventoryItems: true } } } })
-    const salesByCategory = categories.map(cat => ({
-      name: cat.name,
-      value: cat.products.reduce((sum, p) => sum + p.price * cat.products.length, 0),
+    const categories = await db.category.findMany({
+      include: { _count: { select: { products: true } } },
+    })
+    const productsWithCategory = await db.product.findMany({
+      select: {
+        id: true,
+        price: true,
+        categoryId: true,
+        inventoryItems: { select: { quantity: true } },
+      },
+    })
+    const salesByCategory = categories.map((cat) => {
+      const catProducts = productsWithCategory.filter((p) => p.categoryId === cat.id)
+      const amount = catProducts.reduce((sum, p) => {
+        const qty = p.inventoryItems.reduce((s, i) => s + i.quantity, 0)
+        return sum + qty * p.price
+      }, 0)
+      return { category: cat.name, amount }
+    })
+
+    // Warehouse Utilization
+    const warehouses = await db.warehouse.findMany({
+      include: { inventoryItems: { select: { quantity: true } } },
+    })
+    const warehouseUtilization = warehouses.map((wh) => ({
+      warehouse: wh.name,
+      utilized: wh.inventoryItems.reduce((sum, item) => sum + item.quantity, 0),
+      capacity: wh.capacity,
     }))
 
     // Order Status Distribution
-    const soStatusCounts = await db.salesOrder.groupBy({ by: ['status'], _count: { status: true } })
-    const orderStatusDist = soStatusCounts.map(s => ({ name: s.status, value: s._count.status }))
-
-    // Inventory by Warehouse
-    const warehouses = await db.warehouse.findMany({ include: { inventoryItems: true } })
-    const inventoryByWarehouse = warehouses.map(wh => {
-      const totalItems = wh.inventoryItems.reduce((sum, item) => sum + item.quantity, 0)
-      return { name: wh.name, totalItems, capacity: wh.capacity, utilization: Math.round((totalItems / wh.capacity) * 100) }
+    const allSalesOrders = await db.salesOrder.findMany({
+      select: { status: true },
     })
+    const statusMap = new Map<string, number>()
+    for (const so of allSalesOrders) {
+      statusMap.set(so.status, (statusMap.get(so.status) ?? 0) + 1)
+    }
+    const orderStatus = Array.from(statusMap.entries()).map(([status, count]) => ({
+      status,
+      count,
+    }))
+
+    // Top Products by inventory value
+    const allProducts = await db.product.findMany({
+      include: { inventoryItems: { select: { quantity: true } } },
+    })
+    const productsWithValue = allProducts.map((p) => {
+      const totalQty = p.inventoryItems.reduce((sum, item) => sum + item.quantity, 0)
+      return { name: p.name, sku: p.sku, quantity: totalQty, value: totalQty * p.price }
+    })
+    const topProducts = productsWithValue.sort((a, b) => b.value - a.value).slice(0, 5)
 
     // Recent Activity
-    const recentPOs = await db.purchaseOrder.findMany({ take: 3, orderBy: { createdAt: 'desc' }, include: { supplier: true } })
-    const recentWOs = await db.workOrder.findMany({ take: 3, orderBy: { createdAt: 'desc' }, include: { products: { include: { product: true } } } })
-    const recentSOs = await db.salesOrder.findMany({ take: 3, orderBy: { createdAt: 'desc' }, include: { customer: true } })
-
-    const recentActivity = [
-      ...recentPOs.map(po => ({ type: 'purchase_order', description: `PO ${po.poNumber} - ${po.supplier.name}`, status: po.status, time: po.createdAt.toISOString() })),
-      ...recentWOs.map(wo => ({ type: 'work_order', description: `WO ${wo.woNumber} - ${wo.products[0]?.product.name || 'N/A'}`, status: wo.status, time: wo.createdAt.toISOString() })),
-      ...recentSOs.map(so => ({ type: 'sales_order', description: `SO ${so.soNumber} - ${so.customer.name}`, status: so.status, time: so.createdAt.toISOString() })),
-    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 8)
-
-    // Top Products
-    const topItems = await db.posTransactionItem.groupBy({
-      by: ['productId'],
-      _sum: { quantity: true, totalPrice: true },
-      orderBy: { _sum: { totalPrice: 'desc' } },
-      take: 5,
+    const recentLogs = await db.auditLog.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
     })
-    const topProducts = await Promise.all(topItems.map(async (tp) => {
-      const product = await db.product.findUnique({ where: { id: tp.productId } })
-      return { name: product?.name || 'Unknown', quantity: tp._sum.quantity || 0, revenue: tp._sum.totalPrice || 0 }
+    const recentActivity = recentLogs.map((log) => ({
+      id: log.id,
+      user: log.user,
+      action: log.action,
+      module: log.module,
+      details: log.details,
+      createdAt: log.createdAt,
     }))
 
     return NextResponse.json({
-      kpis: { totalRevenue: Math.round(totalRevenue), totalOrders, inventoryValue: Math.round(inventoryValue), totalProducts, activeWorkOrders, pendingShipments, lowStockItems, totalCustomers },
-      revenueByMonth,
+      kpis,
+      revenueChart,
       salesByCategory,
-      orderStatusDist,
-      inventoryByWarehouse,
-      recentActivity,
+      warehouseUtilization,
+      orderStatus,
       topProducts,
+      recentActivity,
     })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+  } catch (error) {
+    console.error('Dashboard error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch dashboard data' },
+      { status: 500 }
+    )
   }
 }

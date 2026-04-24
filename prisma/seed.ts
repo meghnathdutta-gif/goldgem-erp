@@ -1,312 +1,1402 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding GoldGem ERP database...')
+  // ──────────────────────────────────────────────
+  // Clean all tables in reverse dependency order
+  // ──────────────────────────────────────────────
+  await prisma.auditLog.deleteMany();
+  await prisma.demandForecast.deleteMany();
+  await prisma.ecommerceOrder.deleteMany();
+  await prisma.posTransaction.deleteMany();
+  await prisma.salesOrder.deleteMany();
+  await prisma.workOrderProduct.deleteMany();
+  await prisma.workOrder.deleteMany();
+  await prisma.shipmentItem.deleteMany();
+  await prisma.shipment.deleteMany();
+  await prisma.purchaseOrderItem.deleteMany();
+  await prisma.purchaseOrder.deleteMany();
+  await prisma.inventoryMovement.deleteMany();
+  await prisma.inventoryItem.deleteMany();
+  await prisma.bomComponent.deleteMany();
+  await prisma.customer.deleteMany();
+  await prisma.supplier.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.warehouse.deleteMany();
+  await prisma.user.deleteMany();
 
-  // Clean existing data
-  await prisma.demandForecast.deleteMany()
-  await prisma.auditLog.deleteMany()
-  await prisma.ecommerceOrderItem.deleteMany()
-  await prisma.ecommerceOrder.deleteMany()
-  await prisma.posTransactionItem.deleteMany()
-  await prisma.posTransaction.deleteMany()
-  await prisma.salesOrderItem.deleteMany()
-  await prisma.salesOrder.deleteMany()
-  await prisma.workOrderProduct.deleteMany()
-  await prisma.workOrder.deleteMany()
-  await prisma.bomComponent.deleteMany()
-  await prisma.shipmentItem.deleteMany()
-  await prisma.shipment.deleteMany()
-  await prisma.purchaseOrderItem.deleteMany()
-  await prisma.purchaseOrder.deleteMany()
-  await prisma.inventoryMovement.deleteMany()
-  await prisma.inventoryItem.deleteMany()
-  await prisma.supplier.deleteMany()
-  await prisma.customer.deleteMany()
-  await prisma.product.deleteMany()
-  await prisma.category.deleteMany()
-  await prisma.warehouse.deleteMany()
-  await prisma.user.deleteMany()
+  console.log('✅ All tables cleaned.');
 
-  // ── Users ──
-  const admin = await prisma.user.create({
-    data: { email: 'admin@goldgem.com', name: 'Vikram Sharma', password: 'admin123', role: 'admin', phone: '+91-9876543210', isActive: true },
-  })
-  const manager = await prisma.user.create({
-    data: { email: 'meena@goldgem.com', name: 'Meena Patel', password: 'staff123', role: 'manager', phone: '+91-9876543211', isActive: true },
-  })
-  const cashier = await prisma.user.create({
-    data: { email: 'raj@goldgem.com', name: 'Raj Verma', password: 'staff123', role: 'cashier', phone: '+91-9876543212', isActive: true },
-  })
+  // ──────────────────────────────────────────────
+  // 1. Users
+  // ──────────────────────────────────────────────
+  const userVikram = await prisma.user.create({
+    data: {
+      email: 'vikram@goldgem.com',
+      name: 'Vikram Sharma',
+      password: '$2a$10$dummyhashedpwd001admin VikramSharma',
+      role: 'admin',
+    },
+  });
 
-  // ── Categories ──
-  const categories = await Promise.all([
-    prisma.category.create({ data: { name: 'Gold Necklaces', description: '22K & 18K gold necklaces', color: '#d97706', icon: '📿' } }),
-    prisma.category.create({ data: { name: 'Diamond Rings', description: 'Solitaire & cluster diamond rings', color: '#06b6d4', icon: '💍' } }),
-    prisma.category.create({ data: { name: 'Silver Earrings', description: 'Sterling silver earrings', color: '#94a3b8', icon: '✨' } }),
-    prisma.category.create({ data: { name: 'Platinum Bracelets', description: '950 platinum bracelets', color: '#6366f1', icon: '⭐' } }),
-    prisma.category.create({ data: { name: 'Gold Bangles', description: '22K gold bangles', color: '#f59e0b', icon: '🔮' } }),
-    prisma.category.create({ data: { name: 'Pearl Pendants', description: 'South Sea & Akoya pearl pendants', color: '#ec4899', icon: '🐚' } }),
-    prisma.category.create({ data: { name: 'Gemstone Rings', description: 'Ruby, emerald & sapphire rings', color: '#dc2626', icon: '💎' } }),
-    prisma.category.create({ data: { name: 'Gold Chains', description: '22K gold chains & link chains', color: '#f97316', icon: '⛓️' } }),
-  ])
+  const userMeena = await prisma.user.create({
+    data: {
+      email: 'meena@goldgem.com',
+      name: 'Meena Patel',
+      password: '$2a$10$dummyhashedpwd002manager MeenaPatel',
+      role: 'manager',
+    },
+  });
 
-  // ── Products (3 per category = 24) ──
-  const productDefs = [
-    // Gold Necklaces
-    { name: 'Temple Gold Necklace', sku: 'GN-001', price: 185000, costPrice: 148000, isManufactured: true },
-    { name: 'Kundan Bridal Necklace', sku: 'GN-002', price: 325000, costPrice: 260000, isManufactured: true },
-    { name: 'Daily Wear Gold Chain Necklace', sku: 'GN-003', price: 45000, costPrice: 36000, isManufactured: false },
-    // Diamond Rings
-    { name: 'Solitaire Diamond Ring 0.5ct', sku: 'DR-001', price: 275000, costPrice: 220000, isManufactured: true },
-    { name: 'Cluster Diamond Ring', sku: 'DR-002', price: 165000, costPrice: 132000, isManufactured: true },
-    { name: 'Three-Stone Diamond Ring', sku: 'DR-003', price: 395000, costPrice: 316000, isManufactured: true },
-    // Silver Earrings
-    { name: 'Oxidized Jhumka Earrings', sku: 'SE-001', price: 3500, costPrice: 2100, isManufactured: false },
-    { name: 'Silver Stud Earrings', sku: 'SE-002', price: 1800, costPrice: 1080, isManufactured: false },
-    { name: 'Pearl Drop Silver Earrings', sku: 'SE-003', price: 5200, costPrice: 3120, isManufactured: false },
-    // Platinum Bracelets
-    { name: 'Platinum Love Bracelet', sku: 'PB-001', price: 145000, costPrice: 116000, isManufactured: true },
-    { name: 'Platinum Chain Bracelet', sku: 'PB-002', price: 98000, costPrice: 78400, isManufactured: false },
-    { name: 'Diamond Cut Platinum Bangle', sku: 'PB-003', price: 210000, costPrice: 168000, isManufactured: true },
-    // Gold Bangles
-    { name: '22K Plain Gold Bangle', sku: 'GB-001', price: 78000, costPrice: 62400, isManufactured: true },
-    { name: 'Carved Gold Bangle Set', sku: 'GB-002', price: 155000, costPrice: 124000, isManufactured: true },
-    { name: 'Lightweight Daily Wear Bangle', sku: 'GB-003', price: 35000, costPrice: 28000, isManufactured: false },
-    // Pearl Pendants
-    { name: 'South Sea Pearl Pendant', sku: 'PP-001', price: 42000, costPrice: 33600, isManufactured: true },
-    { name: 'Akoya Pearl Drop Pendant', sku: 'PP-002', price: 28000, costPrice: 22400, isManufactured: true },
-    { name: 'Tahitian Pearl Pendant', sku: 'PP-003', price: 55000, costPrice: 44000, isManufactured: true },
-    // Gemstone Rings
-    { name: 'Ruby Halo Ring', sku: 'GR-001', price: 125000, costPrice: 100000, isManufactured: true },
-    { name: 'Emerald Cocktail Ring', sku: 'GR-002', price: 185000, costPrice: 148000, isManufactured: true },
-    { name: 'Blue Sapphire Ring', sku: 'GR-003', price: 155000, costPrice: 124000, isManufactured: true },
-    // Gold Chains
-    { name: '22K Rope Chain 20in', sku: 'GC-001', price: 68000, costPrice: 54400, isManufactured: false },
-    { name: '22K Box Chain 18in', sku: 'GC-002', price: 52000, costPrice: 41600, isManufactured: false },
-    { name: '22K Figaro Chain 22in', sku: 'GC-003', price: 85000, costPrice: 68000, isManufactured: false },
-  ]
+  const userRaj = await prisma.user.create({
+    data: {
+      email: 'raj@goldgem.com',
+      name: 'Raj Verma',
+      password: '$2a$10$dummyhashedpwd003cashier RajVerma',
+      role: 'cashier',
+    },
+  });
 
-  const products: Awaited<ReturnType<typeof prisma.product.create>>[] = []
-  for (let i = 0; i < productDefs.length; i++) {
-    const catIdx = Math.floor(i / 3)
-    const p = await prisma.product.create({
-      data: {
-        ...productDefs[i],
-        categoryId: categories[catIdx].id,
-        unit: 'piece',
-        minStockLevel: 5,
-        isActive: true,
-      },
-    })
-    products.push(p)
+  console.log('✅ 3 Users created.');
+
+  // ──────────────────────────────────────────────
+  // 2. Categories
+  // ──────────────────────────────────────────────
+  const catGoldNecklaces = await prisma.category.create({
+    data: { name: 'Gold Necklaces', icon: 'Necklace', color: '#D4A017' },
+  });
+  const catDiamondRings = await prisma.category.create({
+    data: { name: 'Diamond Rings', icon: 'Gem', color: '#B9F2FF' },
+  });
+  const catSilverEarrings = await prisma.category.create({
+    data: { name: 'Silver Earrings', icon: 'Ear', color: '#C0C0C0' },
+  });
+  const catPlatinumBracelets = await prisma.category.create({
+    data: { name: 'Platinum Bracelets', icon: 'CircleDot', color: '#E5E4E2' },
+  });
+  const catPearlSets = await prisma.category.create({
+    data: { name: 'Pearl Sets', icon: 'Sparkles', color: '#FDEEF4' },
+  });
+  const catTempleJewellery = await prisma.category.create({
+    data: { name: 'Temple Jewellery', icon: 'Crown', color: '#B8860B' },
+  });
+  const catKundanSets = await prisma.category.create({
+    data: { name: 'Kundan Sets', icon: 'Star', color: '#8B0000' },
+  });
+  const catBridalSets = await prisma.category.create({
+    data: { name: 'Bridal Sets', icon: 'Heart', color: '#C71585' },
+  });
+
+  const categories = [
+    catGoldNecklaces,
+    catDiamondRings,
+    catSilverEarrings,
+    catPlatinumBracelets,
+    catPearlSets,
+    catTempleJewellery,
+    catKundanSets,
+    catBridalSets,
+  ];
+
+  console.log('✅ 8 Categories created.');
+
+  // ──────────────────────────────────────────────
+  // 3. Products (24)
+  // ──────────────────────────────────────────────
+
+  // --- Gold Necklaces ---
+  const pGld001 = await prisma.product.create({
+    data: {
+      name: 'Lakshmi Temple Gold Necklace',
+      sku: 'GLD-001',
+      description: 'Exquisite 22K gold necklace featuring Goddess Lakshmi motif with intricate temple work and ruby accents. Handcrafted by master karigars.',
+      categoryId: catGoldNecklaces.id,
+      price: 285000,
+      costPrice: 228000,
+      weight: 42.5,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 3,
+    },
+  });
+
+  const pGld002 = await prisma.product.create({
+    data: {
+      name: 'Mango Motif Haram',
+      sku: 'GLD-002',
+      description: 'Traditional mango motif haram in 22K gold with meenakari work. A timeless South Indian design perfect for festive occasions.',
+      categoryId: catGoldNecklaces.id,
+      price: 350000,
+      costPrice: 280000,
+      weight: 58.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 2,
+    },
+  });
+
+  const pGld003 = await prisma.product.create({
+    data: {
+      name: 'Simple Gold Chain',
+      sku: 'GLD-003',
+      description: 'Classic 22K gold chain with box link pattern. Versatile everyday wear piece, also used as a base component in necklace crafting.',
+      categoryId: catGoldNecklaces.id,
+      price: 45000,
+      costPrice: 36000,
+      weight: 12.0,
+      purity: '22K',
+      isManufactured: false,
+      minStockLevel: 15,
+    },
+  });
+
+  // --- Diamond Rings ---
+  const pDmd001 = await prisma.product.create({
+    data: {
+      name: 'Solitaire Diamond Ring',
+      sku: 'DMD-001',
+      description: 'Stunning 1.2 carat solitaire diamond set in 18K white gold with six-prong setting. IGI certified, VS1 clarity, F colour.',
+      categoryId: catDiamondRings.id,
+      price: 245000,
+      costPrice: 196000,
+      weight: 5.8,
+      purity: '18K',
+      isManufactured: true,
+      minStockLevel: 4,
+    },
+  });
+
+  const pDmd002 = await prisma.product.create({
+    data: {
+      name: 'Cluster Diamond Ring',
+      sku: 'DMD-002',
+      description: 'Elegant cluster ring with 0.65 carat total weight diamonds set in 18K yellow gold. Halo design with pave-set accent diamonds.',
+      categoryId: catDiamondRings.id,
+      price: 185000,
+      costPrice: 148000,
+      weight: 4.2,
+      purity: '18K',
+      isManufactured: true,
+      minStockLevel: 5,
+    },
+  });
+
+  const pDmd003 = await prisma.product.create({
+    data: {
+      name: 'Diamond Eternity Band',
+      sku: 'DMD-003',
+      description: 'Full eternity band with 0.40 carat round brilliant diamonds channel-set in 14K white gold. Perfect as a wedding band.',
+      categoryId: catDiamondRings.id,
+      price: 95000,
+      costPrice: 76000,
+      weight: 3.5,
+      purity: '14K',
+      isManufactured: false,
+      minStockLevel: 8,
+    },
+  });
+
+  // --- Silver Earrings ---
+  const pSlv001 = await prisma.product.create({
+    data: {
+      name: 'Filigree Jhumka',
+      sku: 'SLV-001',
+      description: 'Handcrafted 92.5 sterling silver jhumka with intricate filigree work. Lightweight and elegant, perfect for daily and occasion wear.',
+      categoryId: catSilverEarrings.id,
+      price: 28000,
+      costPrice: 19600,
+      weight: 14.0,
+      purity: '92.5',
+      isManufactured: true,
+      minStockLevel: 10,
+    },
+  });
+
+  const pSlv002 = await prisma.product.create({
+    data: {
+      name: 'Chandbali Earrings',
+      sku: 'SLV-002',
+      description: 'Ornate chandbali earrings in oxidised sterling silver with pearl drops. Mughal-inspired crescent design with delicate ghungroo detailing.',
+      categoryId: catSilverEarrings.id,
+      price: 35000,
+      costPrice: 24500,
+      weight: 18.0,
+      purity: '92.5',
+      isManufactured: true,
+      minStockLevel: 8,
+    },
+  });
+
+  const pSlv003 = await prisma.product.create({
+    data: {
+      name: 'Silver Studs',
+      sku: 'SLV-003',
+      description: 'Classic 92.5 sterling silver stud earrings with push-back closure. Simple polished finish, ideal as base component for jhumka crafting.',
+      categoryId: catSilverEarrings.id,
+      price: 15000,
+      costPrice: 10500,
+      weight: 4.0,
+      purity: '92.5',
+      isManufactured: false,
+      minStockLevel: 25,
+    },
+  });
+
+  // --- Platinum Bracelets ---
+  const pPlt001 = await prisma.product.create({
+    data: {
+      name: 'Platinum Love Band',
+      sku: 'PLT-001',
+      description: 'Sleek platinum love band with brushed matte finish. 95% pure platinum, comfort-fit design. Ideal for couples.',
+      categoryId: catPlatinumBracelets.id,
+      price: 125000,
+      costPrice: 106250,
+      weight: 8.0,
+      purity: '95%',
+      isManufactured: false,
+      minStockLevel: 6,
+    },
+  });
+
+  const pPlt002 = await prisma.product.create({
+    data: {
+      name: 'Diamond Cut Platinum Bangle',
+      sku: 'PLT-002',
+      description: 'Premium diamond-cut platinum bangle with alternating polished and frosted facets. 95% pure platinum with secure clasp mechanism.',
+      categoryId: catPlatinumBracelets.id,
+      price: 210000,
+      costPrice: 178500,
+      weight: 16.0,
+      purity: '95%',
+      isManufactured: true,
+      minStockLevel: 3,
+    },
+  });
+
+  const pPlt003 = await prisma.product.create({
+    data: {
+      name: 'Platinum Chain Bracelet',
+      sku: 'PLT-003',
+      description: 'Delicate platinum chain bracelet with lobster clasp. 95% pure platinum with cable link pattern. Serves as a base for charm additions.',
+      categoryId: catPlatinumBracelets.id,
+      price: 85000,
+      costPrice: 72250,
+      weight: 6.5,
+      purity: '95%',
+      isManufactured: false,
+      minStockLevel: 8,
+    },
+  });
+
+  // --- Pearl Sets ---
+  const pPrl001 = await prisma.product.create({
+    data: {
+      name: 'South Sea Pearl Necklace Set',
+      sku: 'PRL-001',
+      description: 'Luxurious South Sea pearl necklace with matching earrings. 10-12mm AAA grade pearls with 18K gold clasp and diamond accent.',
+      categoryId: catPearlSets.id,
+      price: 165000,
+      costPrice: 132000,
+      weight: 28.0,
+      purity: '18K',
+      isManufactured: false,
+      minStockLevel: 4,
+    },
+  });
+
+  const pPrl002 = await prisma.product.create({
+    data: {
+      name: 'Pearl Drop Earring & Pendant Set',
+      sku: 'PRL-002',
+      description: 'Elegant freshwater pearl drop earrings with matching pendant on 18K gold chain. Perfect for formal occasions and gifting.',
+      categoryId: catPearlSets.id,
+      price: 55000,
+      costPrice: 44000,
+      weight: 10.0,
+      purity: '18K',
+      isManufactured: true,
+      minStockLevel: 10,
+    },
+  });
+
+  const pPrl003 = await prisma.product.create({
+    data: {
+      name: 'Freshwater Pearl String',
+      sku: 'PRL-003',
+      description: 'Single strand of 7-8mm AA grade freshwater pearls with 14K gold clasp. Versatile base piece for layering or standalone wear.',
+      categoryId: catPearlSets.id,
+      price: 35000,
+      costPrice: 28000,
+      weight: 15.0,
+      purity: '14K',
+      isManufactured: false,
+      minStockLevel: 12,
+    },
+  });
+
+  // --- Temple Jewellery ---
+  const pTmp001 = await prisma.product.create({
+    data: {
+      name: 'Naga Temple Choker',
+      sku: 'TMP-001',
+      description: 'Majestic Naga (serpent god) motif choker in 22K gold with ruby and emerald cabochons. Inspired by ancient Chola dynasty temple ornaments.',
+      categoryId: catTempleJewellery.id,
+      price: 295000,
+      costPrice: 236000,
+      weight: 48.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 2,
+    },
+  });
+
+  const pTmp002 = await prisma.product.create({
+    data: {
+      name: 'Goddess Lakshmi Oddiyanam',
+      sku: 'TMP-002',
+      description: 'Traditional waist belt (oddiyanam) featuring Goddess Lakshmi centrepiece in 22K gold with navaratna stones. A bridal must-have.',
+      categoryId: catTempleJewellery.id,
+      price: 325000,
+      costPrice: 260000,
+      weight: 65.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 2,
+    },
+  });
+
+  const pTmp003 = await prisma.product.create({
+    data: {
+      name: 'Temple Jhumki',
+      sku: 'TMP-003',
+      description: 'Traditional temple-style jhumki earrings in 22K gold with Lakshmi coin motif and pearl jhalars. Lightweight for extended wear.',
+      categoryId: catTempleJewellery.id,
+      price: 75000,
+      costPrice: 60000,
+      weight: 12.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 8,
+    },
+  });
+
+  // --- Kundan Sets ---
+  const pKnd001 = await prisma.product.create({
+    data: {
+      name: 'Royal Kundan Bridal Set',
+      sku: 'KND-001',
+      description: 'Magnificent kundan bridal set with necklace, earrings, and maang tikka. Uncut polki diamonds set in 22K gold with meenakari reverse.',
+      categoryId: catKundanSets.id,
+      price: 345000,
+      costPrice: 276000,
+      weight: 72.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 2,
+    },
+  });
+
+  const pKnd002 = await prisma.product.create({
+    data: {
+      name: 'Kundan Choker Necklace',
+      sku: 'KND-002',
+      description: 'Contemporary kundan choker with uncut diamond setting and enamel reverse. 22K gold base with pearl stringing along the edges.',
+      categoryId: catKundanSets.id,
+      price: 195000,
+      costPrice: 156000,
+      weight: 32.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 4,
+    },
+  });
+
+  const pKnd003 = await prisma.product.create({
+    data: {
+      name: 'Kundan Maang Tikka',
+      sku: 'KND-003',
+      description: 'Elegant kundan maang tikka with central uncut diamond and pearl drops. 22K gold setting with delicate chain for comfortable wear.',
+      categoryId: catKundanSets.id,
+      price: 42000,
+      costPrice: 33600,
+      weight: 8.0,
+      purity: '22K',
+      isManufactured: false,
+      minStockLevel: 12,
+    },
+  });
+
+  // --- Bridal Sets ---
+  const pBrd001 = await prisma.product.create({
+    data: {
+      name: 'Traditional South Indian Bridal Set',
+      sku: 'BRD-001',
+      description: 'Complete South Indian bridal set comprising long haram, choker, jhumki, oddiyanam, and vanki. 22K gold with temple motifs.',
+      categoryId: catBridalSets.id,
+      price: 335000,
+      costPrice: 268000,
+      weight: 120.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 1,
+    },
+  });
+
+  const pBrd002 = await prisma.product.create({
+    data: {
+      name: 'North Indian Bridal Necklace Set',
+      sku: 'BRD-002',
+      description: 'Grand North Indian bridal set with rani haar, choker, and chandelier earrings. Kundan and polki work in 22K gold.',
+      categoryId: catBridalSets.id,
+      price: 275000,
+      costPrice: 220000,
+      weight: 95.0,
+      purity: '22K',
+      isManufactured: true,
+      minStockLevel: 1,
+    },
+  });
+
+  const pBrd003 = await prisma.product.create({
+    data: {
+      name: 'Contemporary Bridal Set',
+      sku: 'BRD-003',
+      description: 'Modern minimalist bridal set with geometric necklace and matching studs. 18K white gold with diamond accents for the new-age bride.',
+      categoryId: catBridalSets.id,
+      price: 155000,
+      costPrice: 124000,
+      weight: 35.0,
+      purity: '18K',
+      isManufactured: true,
+      minStockLevel: 3,
+    },
+  });
+
+  const products = [
+    pGld001, pGld002, pGld003,
+    pDmd001, pDmd002, pDmd003,
+    pSlv001, pSlv002, pSlv003,
+    pPlt001, pPlt002, pPlt003,
+    pPrl001, pPrl002, pPrl003,
+    pTmp001, pTmp002, pTmp003,
+    pKnd001, pKnd002, pKnd003,
+    pBrd001, pBrd002, pBrd003,
+  ];
+
+  console.log('✅ 24 Products created.');
+
+  // ──────────────────────────────────────────────
+  // 4. Warehouses
+  // ──────────────────────────────────────────────
+  const whMainVault = await prisma.warehouse.create({
+    data: {
+      name: 'Main Vault',
+      code: 'MUM-VLT',
+      city: 'Mumbai',
+      capacity: 5000,
+    },
+  });
+
+  const whKarigarkhana = await prisma.warehouse.create({
+    data: {
+      name: 'Karigarkhana',
+      code: 'JAI-KGK',
+      city: 'Jaipur',
+      capacity: 2000,
+    },
+  });
+
+  const whDistHub = await prisma.warehouse.create({
+    data: {
+      name: 'Distribution Hub',
+      code: 'DEL-DST',
+      city: 'Delhi',
+      capacity: 3000,
+    },
+  });
+
+  const warehouses = [whMainVault, whKarigarkhana, whDistHub];
+
+  console.log('✅ 3 Warehouses created.');
+
+  // ──────────────────────────────────────────────
+  // 5. Inventory Items
+  // ──────────────────────────────────────────────
+  // Distribute products across warehouses. Note: @@unique([productId, warehouseId])
+
+  const inventoryData: Array<{
+    productId: string;
+    warehouseId: string;
+    quantity: number;
+    reservedQty: number;
+    reorderPoint: number;
+  }> = [
+    // Main Vault - high-value finished goods
+    { productId: pGld001.id, warehouseId: whMainVault.id, quantity: 5, reservedQty: 1, reorderPoint: 3 },
+    { productId: pGld002.id, warehouseId: whMainVault.id, quantity: 3, reservedQty: 0, reorderPoint: 2 },
+    { productId: pGld003.id, warehouseId: whMainVault.id, quantity: 20, reservedQty: 3, reorderPoint: 10 },
+    { productId: pDmd001.id, warehouseId: whMainVault.id, quantity: 4, reservedQty: 1, reorderPoint: 3 },
+    { productId: pDmd002.id, warehouseId: whMainVault.id, quantity: 6, reservedQty: 2, reorderPoint: 4 },
+    { productId: pDmd003.id, warehouseId: whMainVault.id, quantity: 10, reservedQty: 1, reorderPoint: 6 },
+    { productId: pPrl001.id, warehouseId: whMainVault.id, quantity: 3, reservedQty: 0, reorderPoint: 3 },
+    { productId: pKnd001.id, warehouseId: whMainVault.id, quantity: 2, reservedQty: 0, reorderPoint: 2 },
+    { productId: pBrd001.id, warehouseId: whMainVault.id, quantity: 1, reservedQty: 0, reorderPoint: 1 },
+    { productId: pBrd002.id, warehouseId: whMainVault.id, quantity: 1, reservedQty: 0, reorderPoint: 1 },
+
+    // Karigarkhana - raw materials and WIP
+    { productId: pGld003.id, warehouseId: whKarigarkhana.id, quantity: 35, reservedQty: 5, reorderPoint: 15 },
+    { productId: pSlv003.id, warehouseId: whKarigarkhana.id, quantity: 40, reservedQty: 8, reorderPoint: 20 },
+    { productId: pSlv001.id, warehouseId: whKarigarkhana.id, quantity: 12, reservedQty: 2, reorderPoint: 8 },
+    { productId: pSlv002.id, warehouseId: whKarigarkhana.id, quantity: 8, reservedQty: 1, reorderPoint: 6 },
+    { productId: pTmp001.id, warehouseId: whKarigarkhana.id, quantity: 3, reservedQty: 1, reorderPoint: 2 },
+    { productId: pTmp002.id, warehouseId: whKarigarkhana.id, quantity: 2, reservedQty: 0, reorderPoint: 2 },
+    { productId: pTmp003.id, warehouseId: whKarigarkhana.id, quantity: 10, reservedQty: 2, reorderPoint: 6 },
+    { productId: pPrl003.id, warehouseId: whKarigarkhana.id, quantity: 18, reservedQty: 3, reorderPoint: 10 },
+
+    // Distribution Hub - finished goods for retail/online
+    { productId: pPlt001.id, warehouseId: whDistHub.id, quantity: 8, reservedQty: 1, reorderPoint: 5 },
+    { productId: pPlt002.id, warehouseId: whDistHub.id, quantity: 4, reservedQty: 0, reorderPoint: 3 },
+    { productId: pPlt003.id, warehouseId: whDistHub.id, quantity: 10, reservedQty: 2, reorderPoint: 6 },
+    { productId: pPrl002.id, warehouseId: whDistHub.id, quantity: 12, reservedQty: 3, reorderPoint: 8 },
+    { productId: pKnd002.id, warehouseId: whDistHub.id, quantity: 5, reservedQty: 1, reorderPoint: 3 },
+    { productId: pKnd003.id, warehouseId: whDistHub.id, quantity: 15, reservedQty: 2, reorderPoint: 10 },
+    { productId: pBrd003.id, warehouseId: whDistHub.id, quantity: 4, reservedQty: 1, reorderPoint: 3 },
+    { productId: pPrl001.id, warehouseId: whDistHub.id, quantity: 2, reservedQty: 0, reorderPoint: 2 },
+  ];
+
+  const inventoryItems: Array<{ id: string }> = [];
+  for (const inv of inventoryData) {
+    const item = await prisma.inventoryItem.create({ data: inv });
+    inventoryItems.push(item);
   }
 
-  // ── Warehouses ──
-  const whMain = await prisma.warehouse.create({ data: { name: 'Main Vault', code: 'VAULT-MUM', city: 'Mumbai', address: 'Zaveri Bazaar, Mumbai', manager: 'Vikram Sharma', capacity: 5000, isActive: true } })
-  const whWorkshop = await prisma.warehouse.create({ data: { name: 'Karigarkhana', code: 'KGK-JAI', city: 'Jaipur', address: 'Johari Bazaar, Jaipur', manager: 'Meena Patel', capacity: 2000, isActive: true } })
-  const whDist = await prisma.warehouse.create({ data: { name: 'Distribution Hub', code: 'DIST-DEL', city: 'Delhi', address: 'Karol Bagh, Delhi', manager: 'Raj Verma', capacity: 3000, isActive: true } })
+  console.log(`✅ ${inventoryData.length} Inventory Items created.`);
 
-  // ── Inventory Items ──
-  const qtyMap: Record<string, [number, number, number]> = {} // productId -> [mainQty, workshopQty, distQty]
-  for (let i = 0; i < products.length; i++) {
-    const base = i % 5 === 0 ? 2 : i % 3 === 0 ? 8 : 15 + Math.floor(Math.random() * 20)
-    qtyMap[products[i].id] = [base + 5, base + 2, base]
+  // ──────────────────────────────────────────────
+  // 6. Inventory Movements
+  // ──────────────────────────────────────────────
+  const movements = [
+    { inventoryItemId: inventoryItems[0].id, type: 'IN', quantity: 10, reference: 'PO-2024-001', notes: 'Initial stock from Bharat Gold' },
+    { inventoryItemId: inventoryItems[0].id, type: 'OUT', quantity: 5, reference: 'SO-2024-001', notes: 'Sale to Anita Krishnamurthy' },
+    { inventoryItemId: inventoryItems[1].id, type: 'IN', quantity: 5, reference: 'PO-2024-001', notes: 'Initial stock from Bharat Gold' },
+    { inventoryItemId: inventoryItems[1].id, type: 'OUT', quantity: 2, reference: 'SO-2024-002', notes: 'Sale to Deepak Nair' },
+    { inventoryItemId: inventoryItems[10].id, type: 'IN', quantity: 50, reference: 'PO-2024-002', notes: 'Gold chain stock for karigarkhana' },
+    { inventoryItemId: inventoryItems[10].id, type: 'OUT', quantity: 15, reference: 'WO-2024-001', notes: 'Issued for necklace manufacturing' },
+    { inventoryItemId: inventoryItems[11].id, type: 'IN', quantity: 60, reference: 'PO-2024-003', notes: 'Silver studs for jhumka assembly' },
+    { inventoryItemId: inventoryItems[11].id, type: 'OUT', quantity: 20, reference: 'WO-2024-002', notes: 'Issued for jhumka manufacturing' },
+    { inventoryItemId: inventoryItems[18].id, type: 'IN', quantity: 12, reference: 'PO-2024-004', notes: 'Platinum stock for distribution' },
+    { inventoryItemId: inventoryItems[20].id, type: 'IN', quantity: 15, reference: 'PO-2024-005', notes: 'Platinum chain stock received' },
+  ];
+
+  for (const mv of movements) {
+    await prisma.inventoryMovement.create({ data: mv });
   }
-  for (const product of products) {
-    const [mQ, wQ, dQ] = qtyMap[product.id]
-    await prisma.inventoryItem.create({ data: { productId: product.id, warehouseId: whMain.id, quantity: mQ, reorderPoint: 10, reorderQty: 50 } })
-    await prisma.inventoryItem.create({ data: { productId: product.id, warehouseId: whWorkshop.id, quantity: wQ, reorderPoint: 5, reorderQty: 30 } })
-    await prisma.inventoryItem.create({ data: { productId: product.id, warehouseId: whDist.id, quantity: dQ, reorderPoint: 8, reorderQty: 40 } })
-  }
 
-  // ── Suppliers ──
-  const sup1 = await prisma.supplier.create({ data: { name: 'Bharat Gold Refinery', code: 'BGR', email: 'info@bgr.co.in', phone: '+91-22-23456789', city: 'Mumbai', country: 'India', rating: 4.5, leadTimeDays: 5, paymentTerms: 'Net 30', isActive: true } })
-  const sup2 = await prisma.supplier.create({ data: { name: 'Surat Diamond House', code: 'SDH', email: 'sales@sdh.com', phone: '+91-261-2345678', city: 'Surat', country: 'India', rating: 4.8, leadTimeDays: 7, paymentTerms: 'Net 15', isActive: true } })
-  const sup3 = await prisma.supplier.create({ data: { name: 'Rajasthan Silver Arts', code: 'RSA', email: 'orders@rsa.in', phone: '+91-141-2345678', city: 'Jaipur', country: 'India', rating: 3.8, leadTimeDays: 10, paymentTerms: 'Net 45', isActive: true } })
-  const sup4 = await prisma.supplier.create({ data: { name: 'Colombo Gem Traders', code: 'CGT', email: 'gems@cgt.lk', phone: '+94-11-2345678', city: 'Colombo', country: 'Sri Lanka', rating: 4.2, leadTimeDays: 14, paymentTerms: 'Net 30', isActive: true } })
-  const sup5 = await prisma.supplier.create({ data: { name: 'PackWell Jewellery Packaging', code: 'PWJ', email: 'supply@pwj.in', phone: '+91-11-2345678', city: 'Delhi', country: 'India', rating: 3.5, leadTimeDays: 3, paymentTerms: 'COD', isActive: true } })
+  console.log(`✅ ${movements.length} Inventory Movements created.`);
 
-  // ── Purchase Orders ──
+  // ──────────────────────────────────────────────
+  // 7. Suppliers
+  // ──────────────────────────────────────────────
+  const supBharat = await prisma.supplier.create({
+    data: {
+      name: 'Bharat Gold Refinery',
+      code: 'BGR-001',
+      contactPerson: 'Arun Mehta',
+      phone: '+91-261-2345678',
+      email: 'arun@bharatgold.co.in',
+      address: 'Industrial Estate, Ring Road, Surat, Gujarat 395002',
+      rating: 4.8,
+      leadTimeDays: 5,
+      paymentTerms: 'Net 30',
+      isActive: true,
+    },
+  });
+
+  const supSurat = await prisma.supplier.create({
+    data: {
+      name: 'Surat Diamond House',
+      code: 'SDH-001',
+      contactPerson: 'Priya Desai',
+      phone: '+91-261-9876543',
+      email: 'priya@suratdiamond.in',
+      address: 'Diamond Market, Mahidharpura, Surat, Gujarat 395003',
+      rating: 4.6,
+      leadTimeDays: 10,
+      paymentTerms: 'Net 45',
+      isActive: true,
+    },
+  });
+
+  const supSilver = await prisma.supplier.create({
+    data: {
+      name: 'SilverCraft Industries',
+      code: 'SCI-001',
+      contactPerson: 'Rakesh Soni',
+      phone: '+91-141-4567890',
+      email: 'rakesh@silvercraft.co.in',
+      address: 'Johari Bazaar, Jaipur, Rajasthan 302003',
+      rating: 4.3,
+      leadTimeDays: 7,
+      paymentTerms: 'Net 15',
+      isActive: true,
+    },
+  });
+
+  const supPearl = await prisma.supplier.create({
+    data: {
+      name: 'Pearl Bay Traders',
+      code: 'PBT-001',
+      contactPerson: 'Farhana Sheikh',
+      phone: '+91-40-2345678',
+      email: 'farhana@pearlbay.com',
+      address: 'Pearl Market, Charminar, Hyderabad, Telangana 500002',
+      rating: 4.1,
+      leadTimeDays: 12,
+      paymentTerms: 'Net 30',
+      isActive: true,
+    },
+  });
+
+  const supKundan = await prisma.supplier.create({
+    data: {
+      name: 'Kundan Heritage Arts',
+      code: 'KHA-001',
+      contactPerson: 'Manoj Verma',
+      phone: '+91-145-3456789',
+      email: 'manoj@kundanheritage.in',
+      address: 'Hathi Pole, Udaipur, Rajasthan 313001',
+      rating: 4.5,
+      leadTimeDays: 14,
+      paymentTerms: '50% Advance, Net 30',
+      isActive: true,
+    },
+  });
+
+  const suppliers = [supBharat, supSurat, supSilver, supPearl, supKundan];
+
+  console.log('✅ 5 Suppliers created.');
+
+  // ──────────────────────────────────────────────
+  // 8. Purchase Orders
+  // ──────────────────────────────────────────────
   const po1 = await prisma.purchaseOrder.create({
-    data: { poNumber: 'PO-2026-0001', supplierId: sup1.id, status: 'received', totalAmount: 580000, taxAmount: 104400, orderDate: new Date('2026-01-15'), expectedDate: new Date('2026-01-20'), items: { create: [{ productId: products[0].id, quantity: 2, unitPrice: 148000, totalPrice: 296000, receivedQty: 2 }, { productId: products[4].id, quantity: 2, unitPrice: 132000, totalPrice: 264000, receivedQty: 2 }] } },
-    include: { items: true },
-  })
+    data: {
+      poNumber: 'PO-2024-001',
+      supplierId: supBharat.id,
+      status: 'received',
+      totalAmount: 1256000,
+      taxAmount: 37680,
+      notes: 'Q1 gold stock replenishment for Mumbai vault',
+    },
+  });
+
   const po2 = await prisma.purchaseOrder.create({
-    data: { poNumber: 'PO-2026-0002', supplierId: sup2.id, status: 'confirmed', totalAmount: 440000, taxAmount: 79200, orderDate: new Date('2026-02-10'), expectedDate: new Date('2026-02-17'), items: { create: [{ productId: products[3].id, quantity: 2, unitPrice: 220000, totalPrice: 440000, receivedQty: 0 }] } },
-    include: { items: true },
-  })
+    data: {
+      poNumber: 'PO-2024-002',
+      supplierId: supBharat.id,
+      status: 'confirmed',
+      totalAmount: 540000,
+      taxAmount: 16200,
+      notes: 'Gold chain stock for Jaipur karigarkhana',
+    },
+  });
+
   const po3 = await prisma.purchaseOrder.create({
-    data: { poNumber: 'PO-2026-0003', supplierId: sup3.id, status: 'sent', totalAmount: 42000, taxAmount: 7560, orderDate: new Date('2026-03-01'), expectedDate: new Date('2026-03-11'), items: { create: [{ productId: products[6].id, quantity: 20, unitPrice: 2100, totalPrice: 42000, receivedQty: 0 }] } },
-    include: { items: true },
-  })
-  await prisma.purchaseOrder.create({
-    data: { poNumber: 'PO-2026-0004', supplierId: sup4.id, status: 'draft', totalAmount: 372000, taxAmount: 66960, orderDate: new Date('2026-03-15'), items: { create: [{ productId: products[18].id, quantity: 2, unitPrice: 100000, totalPrice: 200000, receivedQty: 0 }, { productId: products[20].id, quantity: 1, unitPrice: 172000, totalPrice: 172000, receivedQty: 0 }] } },
-  })
-  await prisma.purchaseOrder.create({
-    data: { poNumber: 'PO-2026-0005', supplierId: sup1.id, status: 'partial', totalAmount: 320000, taxAmount: 57600, orderDate: new Date('2026-02-20'), expectedDate: new Date('2026-02-25'), items: { create: [{ productId: products[21].id, quantity: 5, unitPrice: 54400, totalPrice: 272000, receivedQty: 3 }, { productId: products[22].id, quantity: 1, unitPrice: 48000, totalPrice: 48000, receivedQty: 0 }] } },
-  })
-  await prisma.purchaseOrder.create({
-    data: { poNumber: 'PO-2026-0006', supplierId: sup5.id, status: 'received', totalAmount: 15000, taxAmount: 2700, orderDate: new Date('2026-01-05'), expectedDate: new Date('2026-01-08'), items: { create: [{ productId: products[7].id, quantity: 50, unitPrice: 300, totalPrice: 15000, receivedQty: 50 }] } },
-  })
+    data: {
+      poNumber: 'PO-2024-003',
+      supplierId: supSilver.id,
+      status: 'received',
+      totalAmount: 210000,
+      taxAmount: 6300,
+      notes: 'Silver components for jhumka and chandbali production',
+    },
+  });
 
-  // ── Shipments ──
-  await prisma.shipment.create({
-    data: { shipmentNumber: 'SHP-2026-0001', purchaseOrderId: po1.id, status: 'delivered', carrier: 'BlueDart', trackingNumber: 'BD1234567890', origin: 'Mumbai', destination: 'Mumbai Vault', shippingDate: new Date('2026-01-18'), deliveryDate: new Date('2026-01-19'), cost: 500, items: { create: [{ productId: products[0].id, quantity: 2 }, { productId: products[4].id, quantity: 2 }] } },
-  })
-  await prisma.shipment.create({
-    data: { shipmentNumber: 'SHP-2026-0002', purchaseOrderId: po2.id, status: 'in_transit', carrier: 'DTDC', trackingNumber: 'DT9876543210', origin: 'Surat', destination: 'Mumbai Vault', shippingDate: new Date('2026-02-12'), cost: 1200, items: { create: [{ productId: products[3].id, quantity: 2 }] } },
-  })
-  await prisma.shipment.create({
-    data: { shipmentNumber: 'SHP-2026-0003', purchaseOrderId: po3.id, status: 'shipped', carrier: 'Delhivery', trackingNumber: 'DL5551234567', origin: 'Jaipur', destination: 'Delhi Hub', shippingDate: new Date('2026-03-03'), cost: 800, items: { create: [{ productId: products[6].id, quantity: 20 }] } },
-  })
-  await prisma.shipment.create({
-    data: { shipmentNumber: 'SHP-2026-0004', status: 'pending', carrier: 'India Post', origin: 'Colombo', destination: 'Mumbai Vault', cost: 2500, items: { create: [{ productId: products[18].id, quantity: 2 }, { productId: products[20].id, quantity: 1 }] } },
-  })
+  const po4 = await prisma.purchaseOrder.create({
+    data: {
+      poNumber: 'PO-2024-004',
+      supplierId: supSurat.id,
+      status: 'sent',
+      totalAmount: 890000,
+      taxAmount: 26700,
+      notes: 'Diamond procurement for ring and bridal set production',
+    },
+  });
 
-  // ── BOM Components (for manufactured products) ──
-  // Gold Necklace needs: Gold Chain + Gemstone Ring (gold wire + findings)
-  await prisma.bomComponent.createMany({
-    data: [
-      { productId: products[0].id, componentId: products[21].id, quantity: 1, notes: 'Base chain' },
-      { productId: products[0].id, componentId: products[17].id, quantity: 2, notes: 'Pearl drops' },
-      { productId: products[1].id, componentId: products[21].id, quantity: 1.5, notes: 'Heavy chain base' },
-      { productId: products[1].id, componentId: products[17].id, quantity: 5, notes: 'Pearl accents' },
-      { productId: products[3].id, componentId: products[21].id, quantity: 0.3, notes: 'Ring band wire' },
-      { productId: products[4].id, componentId: products[21].id, quantity: 0.25, notes: 'Setting wire' },
-      { productId: products[5].id, componentId: products[21].id, quantity: 0.35, notes: 'Band wire' },
-      { productId: products[9].id, componentId: products[21].id, quantity: 0.5, notes: 'Bracelet chain' },
-      { productId: products[11].id, componentId: products[21].id, quantity: 0.6, notes: 'Bangle wire' },
-      { productId: products[12].id, componentId: products[21].id, quantity: 0.4, notes: 'Bangle base' },
-      { productId: products[13].id, componentId: products[21].id, quantity: 0.8, notes: 'Heavy bangle wire' },
-      { productId: products[15].id, componentId: products[21].id, quantity: 0.15, notes: 'Pendant cap wire' },
-      { productId: products[16].id, componentId: products[21].id, quantity: 0.12, notes: 'Pendant cap wire' },
-      { productId: products[17].id, componentId: products[21].id, quantity: 0.18, notes: 'Pendant cap wire' },
-      { productId: products[18].id, componentId: products[21].id, quantity: 0.3, notes: 'Ring band wire' },
-      { productId: products[19].id, componentId: products[21].id, quantity: 0.35, notes: 'Setting wire' },
-      { productId: products[20].id, componentId: products[21].id, quantity: 0.28, notes: 'Ring band wire' },
-    ],
-  })
+  const po5 = await prisma.purchaseOrder.create({
+    data: {
+      poNumber: 'PO-2024-005',
+      supplierId: supPearl.id,
+      status: 'confirmed',
+      totalAmount: 320000,
+      taxAmount: 9600,
+      notes: 'South Sea and freshwater pearl stock for Q2',
+    },
+  });
 
-  // ── Work Orders ──
-  await prisma.workOrder.create({
-    data: { woNumber: 'WO-2026-0001', status: 'completed', priority: 'high', plannedStart: new Date('2026-01-10'), plannedEnd: new Date('2026-01-20'), actualStart: new Date('2026-01-10'), actualEnd: new Date('2026-01-18'), products: { create: [{ productId: products[0].id, targetQty: 5, completedQty: 5, wastageQty: 0 }] } },
-  })
-  await prisma.workOrder.create({
-    data: { woNumber: 'WO-2026-0002', status: 'in_progress', priority: 'urgent', plannedStart: new Date('2026-03-01'), plannedEnd: new Date('2026-03-15'), actualStart: new Date('2026-03-01'), products: { create: [{ productId: products[1].id, targetQty: 3, completedQty: 1, wastageQty: 0 }] } },
-  })
-  await prisma.workOrder.create({
-    data: { woNumber: 'WO-2026-0003', status: 'in_progress', priority: 'medium', plannedStart: new Date('2026-03-05'), plannedEnd: new Date('2026-03-20'), actualStart: new Date('2026-03-06'), products: { create: [{ productId: products[3].id, targetQty: 8, completedQty: 3, wastageQty: 1 }] } },
-  })
-  await prisma.workOrder.create({
-    data: { woNumber: 'WO-2026-0004', status: 'planned', priority: 'low', plannedStart: new Date('2026-04-01'), plannedEnd: new Date('2026-04-15'), products: { create: [{ productId: products[12].id, targetQty: 10, completedQty: 0, wastageQty: 0 }] } },
-  })
-  await prisma.workOrder.create({
-    data: { woNumber: 'WO-2026-0005', status: 'planned', priority: 'medium', plannedStart: new Date('2026-04-05'), plannedEnd: new Date('2026-04-20'), products: { create: [{ productId: products[15].id, targetQty: 6, completedQty: 0, wastageQty: 0 }] } },
-  })
+  const po6 = await prisma.purchaseOrder.create({
+    data: {
+      poNumber: 'PO-2024-006',
+      supplierId: supKundan.id,
+      status: 'draft',
+      totalAmount: 0,
+      taxAmount: 0,
+      notes: 'Pending kundan component requirement calculation',
+    },
+  });
 
-  // ── Customers ──
-  const cust1 = await prisma.customer.create({ data: { name: 'Priya Kapoor', email: 'priya@email.com', phone: '+91-9812345678', city: 'Mumbai', type: 'retail' } })
-  const cust2 = await prisma.customer.create({ data: { name: 'Arjun Malhotra', email: 'arjun@email.com', phone: '+91-9823456789', city: 'Delhi', type: 'wholesale', gstNumber: '07AABCM1234A1Z5' } })
-  const cust3 = await prisma.customer.create({ data: { name: 'Nisha Reddy', email: 'nisha@email.com', phone: '+91-9834567890', city: 'Hyderabad', type: 'retail' } })
-  const cust4 = await prisma.customer.create({ data: { name: 'Royal Jewellers', email: 'orders@royaljewels.in', phone: '+91-9845678901', city: 'Jaipur', type: 'wholesale', gstNumber: '08AABCR5678B2Z3' } })
-  const cust5 = await prisma.customer.create({ data: { name: 'Kavita Singh', email: 'kavita@email.com', phone: '+91-9856789012', city: 'Bangalore', type: 'online' } })
-  const cust6 = await prisma.customer.create({ data: { name: 'Deepak Gupta', email: 'deepak@email.com', phone: '+91-9867890123', city: 'Chennai', type: 'retail' } })
-  const cust7 = await prisma.customer.create({ data: { name: 'Lakshmi Jewels', email: 'info@lakshmi.co.in', phone: '+91-9878901234', city: 'Kolkata', type: 'wholesale', gstNumber: '19AABCL9012C3Z1' } })
-  const cust8 = await prisma.customer.create({ data: { name: 'Ritu Sharma', email: 'ritu@email.com', phone: '+91-9889012345', city: 'Pune', type: 'online' } })
+  console.log('✅ 6 Purchase Orders created.');
 
-  // ── Sales Orders ──
-  await prisma.salesOrder.create({
-    data: { soNumber: 'SO-2026-0001', customerId: cust2.id, userId: admin.id, status: 'delivered', orderDate: new Date('2026-01-20'), deliveryDate: new Date('2026-01-25'), totalAmount: 296000, taxAmount: 53280, items: { create: [{ productId: products[0].id, quantity: 1, unitPrice: 185000, totalPrice: 185000 }, { productId: products[21].id, quantity: 2, unitPrice: 55500, totalPrice: 111000 }] } },
-  })
-  await prisma.salesOrder.create({
-    data: { soNumber: 'SO-2026-0002', customerId: cust4.id, userId: manager.id, status: 'shipped', orderDate: new Date('2026-02-15'), totalAmount: 620000, taxAmount: 111600, items: { create: [{ productId: products[3].id, quantity: 2, unitPrice: 275000, totalPrice: 550000 }, { productId: products[6].id, quantity: 20, unitPrice: 3500, totalPrice: 70000 }] } },
-  })
-  await prisma.salesOrder.create({
-    data: { soNumber: 'SO-2026-0003', customerId: cust1.id, userId: admin.id, status: 'confirmed', orderDate: new Date('2026-03-10'), totalAmount: 325000, taxAmount: 58500, items: { create: [{ productId: products[1].id, quantity: 1, unitPrice: 325000, totalPrice: 325000 }] } },
-  })
-  await prisma.salesOrder.create({
-    data: { soNumber: 'SO-2026-0004', customerId: cust3.id, status: 'draft', orderDate: new Date('2026-03-18'), totalAmount: 42000, taxAmount: 7560, items: { create: [{ productId: products[15].id, quantity: 1, unitPrice: 42000, totalPrice: 42000 }] } },
-  })
-  await prisma.salesOrder.create({
-    data: { soNumber: 'SO-2026-0005', customerId: cust6.id, userId: manager.id, status: 'processing', orderDate: new Date('2026-03-20'), totalAmount: 155000, taxAmount: 27900, items: { create: [{ productId: products[13].id, quantity: 1, unitPrice: 155000, totalPrice: 155000 }] } },
-  })
+  // ──────────────────────────────────────────────
+  // 9. Purchase Order Items
+  // ──────────────────────────────────────────────
+  const poItems = [
+    { purchaseOrderId: po1.id, productId: pGld001.id, quantity: 5, unitPrice: 228000, receivedQty: 5 },
+    { purchaseOrderId: po1.id, productId: pGld002.id, quantity: 3, unitPrice: 280000, receivedQty: 3 },
+    { purchaseOrderId: po2.id, productId: pGld003.id, quantity: 50, unitPrice: 36000, receivedQty: 0 },
+    { purchaseOrderId: po3.id, productId: pSlv003.id, quantity: 60, unitPrice: 10500, receivedQty: 60 },
+    { purchaseOrderId: po3.id, productId: pSlv001.id, quantity: 15, unitPrice: 19600, receivedQty: 15 },
+    { purchaseOrderId: po4.id, productId: pDmd001.id, quantity: 6, unitPrice: 196000, receivedQty: 0 },
+    { purchaseOrderId: po4.id, productId: pDmd003.id, quantity: 10, unitPrice: 76000, receivedQty: 0 },
+    { purchaseOrderId: po5.id, productId: pPrl001.id, quantity: 4, unitPrice: 132000, receivedQty: 0 },
+    { purchaseOrderId: po5.id, productId: pPrl003.id, quantity: 20, unitPrice: 28000, receivedQty: 0 },
+  ];
 
-  // ── POS Transactions ──
-  const posItems = [
-    { productId: products[6].id, productName: 'Oxidized Jhumka Earrings', quantity: 2, unitPrice: 3500, totalPrice: 7000 },
-    { productId: products[7].id, productName: 'Silver Stud Earrings', quantity: 3, unitPrice: 1800, totalPrice: 5400 },
-    { productId: products[14].id, productName: 'Lightweight Daily Wear Bangle', quantity: 1, unitPrice: 35000, totalPrice: 35000 },
-    { productId: products[21].id, productName: '22K Rope Chain 20in', quantity: 1, unitPrice: 68000, totalPrice: 68000 },
-    { productId: products[8].id, productName: 'Pearl Drop Silver Earrings', quantity: 1, unitPrice: 5200, totalPrice: 5200 },
-    { productId: products[14].id, productName: 'Lightweight Daily Wear Bangle', quantity: 2, unitPrice: 35000, totalPrice: 70000 },
-    { productId: products[22].id, productName: '22K Box Chain 18in', quantity: 1, unitPrice: 52000, totalPrice: 52000 },
-    { productId: products[6].id, productName: 'Oxidized Jhumka Earrings', quantity: 4, unitPrice: 3500, totalPrice: 14000 },
-  ]
-  for (let i = 0; i < 8; i++) {
-    const item = posItems[i]
-    const subtotal = item.totalPrice
-    const tax = Math.round(subtotal * 0.03)
-    const discount = i % 3 === 0 ? 500 : 0
-    await prisma.posTransaction.create({
-      data: {
-        transactionNumber: `TRX-2026-${String(i + 1).padStart(5, '0')}`,
-        userId: i % 2 === 0 ? cashier.id : admin.id,
-        customerName: i < 3 ? ['Priya Kapoor', 'Nisha Reddy', 'Walk-in Customer'][i] : 'Walk-in Customer',
-        subtotal,
-        taxAmount: tax,
-        discount,
-        totalAmount: subtotal + tax - discount,
-        paymentMethod: ['cash', 'card', 'upi'][i % 3],
-        status: 'completed',
-        createdAt: new Date(Date.now() - (8 - i) * 86400000),
-        items: { create: [item] },
-      },
-    })
+  for (const item of poItems) {
+    await prisma.purchaseOrderItem.create({ data: item });
   }
 
-  // ── E-Commerce Orders ──
-  await prisma.ecommerceOrder.create({
-    data: { orderNumber: 'ORD-2026-00001', customerId: cust5.id, status: 'delivered', orderDate: new Date('2026-01-25'), shippingAddress: 'Kavita Singh, Koramangala, Bangalore 560034', totalAmount: 45000, taxAmount: 8100, shippingCost: 0, paymentMethod: 'online', paymentStatus: 'paid', items: { create: [{ productId: products[2].id, productName: 'Daily Wear Gold Chain Necklace', quantity: 1, unitPrice: 45000, totalPrice: 45000 }] } },
-  })
-  await prisma.ecommerceOrder.create({
-    data: { orderNumber: 'ORD-2026-00002', customerId: cust8.id, status: 'shipped', orderDate: new Date('2026-02-20'), shippingAddress: 'Ritu Sharma, Kothrud, Pune 411038', totalAmount: 3500, taxAmount: 630, shippingCost: 99, paymentMethod: 'online', paymentStatus: 'paid', items: { create: [{ productId: products[6].id, productName: 'Oxidized Jhumka Earrings', quantity: 1, unitPrice: 3500, totalPrice: 3500 }] } },
-  })
-  await prisma.ecommerceOrder.create({
-    data: { orderNumber: 'ORD-2026-00003', customerId: cust5.id, status: 'processing', orderDate: new Date('2026-03-15'), shippingAddress: 'Kavita Singh, Koramangala, Bangalore 560034', totalAmount: 78000, taxAmount: 14040, shippingCost: 0, paymentMethod: 'card', paymentStatus: 'paid', items: { create: [{ productId: products[12].id, productName: '22K Plain Gold Bangle', quantity: 1, unitPrice: 78000, totalPrice: 78000 }] } },
-  })
-  await prisma.ecommerceOrder.create({
-    data: { orderNumber: 'ORD-2026-00004', customerId: cust8.id, status: 'confirmed', orderDate: new Date('2026-03-20'), shippingAddress: 'Ritu Sharma, Kothrud, Pune 411038', totalAmount: 52000, taxAmount: 9360, shippingCost: 0, paymentMethod: 'upi', paymentStatus: 'paid', items: { create: [{ productId: products[22].id, productName: '22K Box Chain 18in', quantity: 1, unitPrice: 52000, totalPrice: 52000 }] } },
-  })
-  await prisma.ecommerceOrder.create({
-    data: { orderNumber: 'ORD-2026-00005', customerId: cust3.id, status: 'pending', orderDate: new Date('2026-03-22'), shippingAddress: 'Nisha Reddy, Banjara Hills, Hyderabad 500034', totalAmount: 5200, taxAmount: 936, shippingCost: 99, paymentMethod: 'online', paymentStatus: 'pending', items: { create: [{ productId: products[8].id, productName: 'Pearl Drop Silver Earrings', quantity: 1, unitPrice: 5200, totalPrice: 5200 }] } },
-  })
+  console.log(`✅ ${poItems.length} Purchase Order Items created.`);
 
-  // ── Demand Forecasts ──
-  for (let i = 0; i < 4; i++) {
-    const p = products[i * 6] // Every 6th product
-    for (let m = 0; m < 3; m++) {
-      await prisma.demandForecast.create({
-        data: {
-          productId: p.id,
-          period: `2026-${String(m + 4).padStart(2, '0')}`,
-          predictedDemand: 8 + Math.floor(Math.random() * 15),
-          confidence: 0.6 + Math.random() * 0.3,
-          model: ['prophet', 'arima', 'moving_avg'][m % 3],
-        },
-      })
-    }
+  // ──────────────────────────────────────────────
+  // 10. Customers
+  // ──────────────────────────────────────────────
+  const custAnita = await prisma.customer.create({
+    data: {
+      name: 'Anita Krishnamurthy',
+      email: 'anita.k@gmail.com',
+      phone: '+91-9820034567',
+      address: '12, Nepean Sea Road, Mumbai, Maharashtra 400036',
+      type: 'retail',
+      gstNumber: null,
+    },
+  });
+
+  const custDeepak = await prisma.customer.create({
+    data: {
+      name: 'Deepak Nair',
+      email: 'deepak.nair@outlook.com',
+      phone: '+91-9845123456',
+      address: '45, TTK Road, Chennai, Tamil Nadu 600018',
+      type: 'retail',
+      gstNumber: null,
+    },
+  });
+
+  const custPriyal = await prisma.customer.create({
+    data: {
+      name: 'Priyal Agarwal',
+      email: 'priyal@srijanjewellers.com',
+      phone: '+91-9830012345',
+      address: '78, Camac Street, Kolkata, West Bengal 700017',
+      type: 'wholesale',
+      gstNumber: '19AABCS1429B1Z5',
+    },
+  });
+
+  const custRohit = await prisma.customer.create({
+    data: {
+      name: 'Rohit Gupta',
+      email: 'rohit.gupta@royaljewels.in',
+      phone: '+91-9829098765',
+      address: '23, MI Road, Jaipur, Rajasthan 302001',
+      type: 'wholesale',
+      gstNumber: '08AABCR5678Q1Z3',
+    },
+  });
+
+  const custSunita = await prisma.customer.create({
+    data: {
+      name: 'Sunita Reddy',
+      email: 'sunita.reddy@yahoo.com',
+      phone: '+91-9704056789',
+      address: '56, Banjara Hills, Hyderabad, Telangana 500034',
+      type: 'retail',
+      gstNumber: null,
+    },
+  });
+
+  const custTanishq = await prisma.customer.create({
+    data: {
+      name: 'Tanishq Distribution',
+      email: 'orders@tanishqdist.co.in',
+      phone: '+91-80-45678901',
+      address: 'Titan Towers, Basavanagudi, Bengaluru, Karnataka 560004',
+      type: 'wholesale',
+      gstNumber: '29AABCT1332L1ZE',
+    },
+  });
+
+  const custKavita = await prisma.customer.create({
+    data: {
+      name: 'Kavita Sharma',
+      email: 'kavita.sharma@gmail.com',
+      phone: '+91-9810176543',
+      address: '89, Greater Kailash-II, New Delhi 110048',
+      type: 'online',
+      gstNumber: null,
+    },
+  });
+
+  const custMahesh = await prisma.customer.create({
+    data: {
+      name: 'Mahesh Joshi',
+      email: 'mahesh.joshi@email.com',
+      phone: '+91-9423054321',
+      address: '34, FC Road, Pune, Maharashtra 411005',
+      type: 'online',
+      gstNumber: null,
+    },
+  });
+
+  const customers = [custAnita, custDeepak, custPriyal, custRohit, custSunita, custTanishq, custKavita, custMahesh];
+
+  console.log('✅ 8 Customers created.');
+
+  // ──────────────────────────────────────────────
+  // 11. Sales Orders
+  // ──────────────────────────────────────────────
+  const so1 = await prisma.salesOrder.create({
+    data: {
+      soNumber: 'SO-2024-001',
+      customerId: custAnita.id,
+      status: 'delivered',
+      totalAmount: 285000,
+      discount: 5000,
+      taxAmount: 8400,
+      notes: 'Wedding anniversary gift. Gift wrapping requested.',
+    },
+  });
+
+  const so2 = await prisma.salesOrder.create({
+    data: {
+      soNumber: 'SO-2024-002',
+      customerId: custDeepak.id,
+      status: 'shipped',
+      totalAmount: 350000,
+      discount: 10000,
+      taxAmount: 10200,
+      notes: 'Bridal order - requires hallmark certificate.',
+    },
+  });
+
+  const so3 = await prisma.salesOrder.create({
+    data: {
+      soNumber: 'SO-2024-003',
+      customerId: custPriyal.id,
+      status: 'confirmed',
+      totalAmount: 1250000,
+      discount: 50000,
+      taxAmount: 36000,
+      notes: 'Wholesale bulk order. Custom hallmarking required.',
+    },
+  });
+
+  const so4 = await prisma.salesOrder.create({
+    data: {
+      soNumber: 'SO-2024-004',
+      customerId: custSunita.id,
+      status: 'pending',
+      totalAmount: 75000,
+      discount: 0,
+      taxAmount: 2250,
+      notes: 'Temple jhumki for pooja ceremony.',
+    },
+  });
+
+  const so5 = await prisma.salesOrder.create({
+    data: {
+      soNumber: 'SO-2024-005',
+      customerId: custTanishq.id,
+      status: 'processing',
+      totalAmount: 2450000,
+      discount: 122500,
+      taxAmount: 69825,
+      notes: 'Q2 wholesale replenishment. Split delivery across 3 locations.',
+    },
+  });
+
+  console.log('✅ 5 Sales Orders created.');
+
+  // ──────────────────────────────────────────────
+  // 12. POS Transactions
+  // ──────────────────────────────────────────────
+  const posTransactions = [
+    {
+      transactionNumber: 'POS-2024-001',
+      items: JSON.stringify([{ productId: pGld003.id, name: 'Simple Gold Chain', qty: 1, price: 45000 }]),
+      subtotal: 45000,
+      tax: 1350,
+      discount: 0,
+      total: 46350,
+      paymentMethod: 'UPI',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-002',
+      items: JSON.stringify([{ productId: pSlv001.id, name: 'Filigree Jhumka', qty: 2, price: 28000 }]),
+      subtotal: 56000,
+      tax: 1680,
+      discount: 1000,
+      total: 56680,
+      paymentMethod: 'Card',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-003',
+      items: JSON.stringify([
+        { productId: pPlt001.id, name: 'Platinum Love Band', qty: 2, price: 125000 },
+        { productId: pDmd003.id, name: 'Diamond Eternity Band', qty: 1, price: 95000 },
+      ]),
+      subtotal: 345000,
+      tax: 10350,
+      discount: 5000,
+      total: 350350,
+      paymentMethod: 'Card',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-004',
+      items: JSON.stringify([{ productId: pKnd003.id, name: 'Kundan Maang Tikka', qty: 1, price: 42000 }]),
+      subtotal: 42000,
+      tax: 1260,
+      discount: 0,
+      total: 43260,
+      paymentMethod: 'Cash',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-005',
+      items: JSON.stringify([{ productId: pPrl002.id, name: 'Pearl Drop Earring & Pendant Set', qty: 1, price: 55000 }]),
+      subtotal: 55000,
+      tax: 1650,
+      discount: 2000,
+      total: 54650,
+      paymentMethod: 'UPI',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-006',
+      items: JSON.stringify([
+        { productId: pSlv003.id, name: 'Silver Studs', qty: 3, price: 15000 },
+        { productId: pSlv001.id, name: 'Filigree Jhumka', qty: 1, price: 28000 },
+      ]),
+      subtotal: 73000,
+      tax: 2190,
+      discount: 0,
+      total: 75190,
+      paymentMethod: 'Cash',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-007',
+      items: JSON.stringify([{ productId: pTmp003.id, name: 'Temple Jhumki', qty: 2, price: 75000 }]),
+      subtotal: 150000,
+      tax: 4500,
+      discount: 3000,
+      total: 151500,
+      paymentMethod: 'Card',
+      status: 'completed',
+    },
+    {
+      transactionNumber: 'POS-2024-008',
+      items: JSON.stringify([{ productId: pPlt003.id, name: 'Platinum Chain Bracelet', qty: 1, price: 85000 }]),
+      subtotal: 85000,
+      tax: 2550,
+      discount: 0,
+      total: 87550,
+      paymentMethod: 'UPI',
+      status: 'refunded',
+    },
+  ];
+
+  for (const pos of posTransactions) {
+    await prisma.posTransaction.create({ data: pos });
   }
 
-  console.log('✅ Seed completed successfully!')
-  console.log(`   Users: 3 | Categories: ${categories.length} | Products: ${products.length}`)
-  console.log('   Warehouses: 3 | Suppliers: 5 | Customers: 8')
-  console.log('   Purchase Orders: 6 | Sales Orders: 5 | POS Transactions: 8')
-  console.log('   E-Commerce Orders: 5 | Work Orders: 5 | Shipments: 4')
+  console.log(`✅ ${posTransactions.length} POS Transactions created.`);
+
+  // ──────────────────────────────────────────────
+  // 13. E-Commerce Orders
+  // ──────────────────────────────────────────────
+  const ecoOrders = [
+    {
+      orderNumber: 'ECO-2024-001',
+      customerName: 'Kavita Sharma',
+      customerEmail: 'kavita.sharma@gmail.com',
+      items: JSON.stringify([{ productId: pPrl002.id, name: 'Pearl Drop Earring & Pendant Set', qty: 1, price: 55000 }]),
+      totalAmount: 56650,
+      shippingAddress: '89, Greater Kailash-II, New Delhi 110048',
+      paymentStatus: 'paid',
+      orderStatus: 'delivered',
+    },
+    {
+      orderNumber: 'ECO-2024-002',
+      customerName: 'Mahesh Joshi',
+      customerEmail: 'mahesh.joshi@email.com',
+      items: JSON.stringify([{ productId: pSlv001.id, name: 'Filigree Jhumka', qty: 2, price: 28000 }]),
+      totalAmount: 57680,
+      shippingAddress: '34, FC Road, Pune, Maharashtra 411005',
+      paymentStatus: 'paid',
+      orderStatus: 'shipped',
+    },
+    {
+      orderNumber: 'ECO-2024-003',
+      customerName: 'Rashmi Iyer',
+      customerEmail: 'rashmi.iyer@gmail.com',
+      items: JSON.stringify([
+        { productId: pDmd003.id, name: 'Diamond Eternity Band', qty: 1, price: 95000 },
+        { productId: pKnd003.id, name: 'Kundan Maang Tikka', qty: 1, price: 42000 },
+      ]),
+      totalAmount: 141710,
+      shippingAddress: '22, Anna Nagar, Chennai, Tamil Nadu 600040',
+      paymentStatus: 'paid',
+      orderStatus: 'processing',
+    },
+    {
+      orderNumber: 'ECO-2024-004',
+      customerName: 'Neha Kapoor',
+      customerEmail: 'neha.kapoor@hotmail.com',
+      items: JSON.stringify([{ productId: pBrd003.id, name: 'Contemporary Bridal Set', qty: 1, price: 155000 }]),
+      totalAmount: 159650,
+      shippingAddress: '56, Vasant Kunj, New Delhi 110070',
+      paymentStatus: 'pending',
+      orderStatus: 'confirmed',
+    },
+    {
+      orderNumber: 'ECO-2024-005',
+      customerName: 'Amit Singhania',
+      customerEmail: 'amit.singhania@gmail.com',
+      items: JSON.stringify([{ productId: pPlt001.id, name: 'Platinum Love Band', qty: 2, price: 125000 }]),
+      totalAmount: 257500,
+      shippingAddress: '101, Park Street, Kolkata, West Bengal 700016',
+      paymentStatus: 'failed',
+      orderStatus: 'pending',
+    },
+  ];
+
+  for (const eco of ecoOrders) {
+    await prisma.ecommerceOrder.create({ data: eco });
+  }
+
+  console.log(`✅ ${ecoOrders.length} E-Commerce Orders created.`);
+
+  // ──────────────────────────────────────────────
+  // 14. Work Orders
+  // ──────────────────────────────────────────────
+  const wo1 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-2024-001',
+      status: 'completed',
+      priority: 'high',
+      plannedStart: new Date('2024-01-05'),
+      plannedEnd: new Date('2024-01-20'),
+      actualStart: new Date('2024-01-06'),
+      actualEnd: new Date('2024-01-22'),
+      notes: 'Lakshmi Temple Necklace batch - wedding season rush order',
+    },
+  });
+
+  const wo2 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-2024-002',
+      status: 'in_progress',
+      priority: 'high',
+      plannedStart: new Date('2024-02-01'),
+      plannedEnd: new Date('2024-02-28'),
+      actualStart: new Date('2024-02-02'),
+      actualEnd: null,
+      notes: 'Filigree Jhumka batch for Holi season demand',
+    },
+  });
+
+  const wo3 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-2024-003',
+      status: 'in_progress',
+      priority: 'medium',
+      plannedStart: new Date('2024-02-10'),
+      plannedEnd: new Date('2024-03-15'),
+      actualStart: new Date('2024-02-12'),
+      actualEnd: null,
+      notes: 'Royal Kundan Bridal Set - custom order for exhibition',
+    },
+  });
+
+  const wo4 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-2024-004',
+      status: 'planned',
+      priority: 'medium',
+      plannedStart: new Date('2024-03-01'),
+      plannedEnd: new Date('2024-03-25'),
+      actualStart: null,
+      actualEnd: null,
+      notes: 'Diamond ring production batch - solitaire and cluster',
+    },
+  });
+
+  const wo5 = await prisma.workOrder.create({
+    data: {
+      woNumber: 'WO-2024-005',
+      status: 'planned',
+      priority: 'low',
+      plannedStart: new Date('2024-03-15'),
+      plannedEnd: new Date('2024-04-10'),
+      actualStart: null,
+      actualEnd: null,
+      notes: 'Pearl set assembly and temple jhumki restocking',
+    },
+  });
+
+  console.log('✅ 5 Work Orders created.');
+
+  // ──────────────────────────────────────────────
+  // 15. Work Order Products
+  // ──────────────────────────────────────────────
+  const woProducts = [
+    { workOrderId: wo1.id, productId: pGld001.id, targetQty: 5, completedQty: 5, wastageQty: 2.1 },
+    { workOrderId: wo2.id, productId: pSlv001.id, targetQty: 20, completedQty: 12, wastageQty: 1.8 },
+    { workOrderId: wo2.id, productId: pSlv002.id, targetQty: 10, completedQty: 4, wastageQty: 0.9 },
+    { workOrderId: wo3.id, productId: pKnd001.id, targetQty: 3, completedQty: 1, wastageQty: 3.5 },
+    { workOrderId: wo3.id, productId: pKnd002.id, targetQty: 5, completedQty: 0, wastageQty: 0 },
+    { workOrderId: wo4.id, productId: pDmd001.id, targetQty: 6, completedQty: 0, wastageQty: 0 },
+    { workOrderId: wo4.id, productId: pDmd002.id, targetQty: 8, completedQty: 0, wastageQty: 0 },
+    { workOrderId: wo5.id, productId: pPrl002.id, targetQty: 15, completedQty: 0, wastageQty: 0 },
+    { workOrderId: wo5.id, productId: pTmp003.id, targetQty: 12, completedQty: 0, wastageQty: 0 },
+  ];
+
+  for (const wop of woProducts) {
+    await prisma.workOrderProduct.create({ data: wop });
+  }
+
+  console.log(`✅ ${woProducts.length} Work Order Products created.`);
+
+  // ──────────────────────────────────────────────
+  // 16. Shipments
+  // ──────────────────────────────────────────────
+  const ship1 = await prisma.shipment.create({
+    data: {
+      shipmentNumber: 'SHP-2024-001',
+      carrier: 'BlueDart',
+      trackingNumber: 'BD7890123456IN',
+      origin: 'Mumbai',
+      destination: 'Chennai',
+      status: 'delivered',
+      shippedDate: new Date('2024-01-18'),
+      deliveredDate: new Date('2024-01-20'),
+    },
+  });
+
+  const ship2 = await prisma.shipment.create({
+    data: {
+      shipmentNumber: 'SHP-2024-002',
+      carrier: 'DTDC',
+      trackingNumber: 'DT2345678901IN',
+      origin: 'Mumbai',
+      destination: 'Kolkata',
+      status: 'in_transit',
+      shippedDate: new Date('2024-02-10'),
+      deliveredDate: null,
+    },
+  });
+
+  const ship3 = await prisma.shipment.create({
+    data: {
+      shipmentNumber: 'SHP-2024-003',
+      carrier: 'India Post',
+      trackingNumber: 'IP5678901234IN',
+      origin: 'Jaipur',
+      destination: 'Hyderabad',
+      status: 'in_transit',
+      shippedDate: new Date('2024-02-14'),
+      deliveredDate: null,
+    },
+  });
+
+  const ship4 = await prisma.shipment.create({
+    data: {
+      shipmentNumber: 'SHP-2024-004',
+      carrier: 'Delhivery',
+      trackingNumber: 'DL9012345678IN',
+      origin: 'Delhi',
+      destination: 'Bengaluru',
+      status: 'pending',
+      shippedDate: null,
+      deliveredDate: null,
+    },
+  });
+
+  console.log('✅ 4 Shipments created.');
+
+  // ──────────────────────────────────────────────
+  // 17. Shipment Items
+  // ──────────────────────────────────────────────
+  const shipItems = [
+    { shipmentId: ship1.id, productId: pGld001.id, quantity: 2 },
+    { shipmentId: ship2.id, productId: pGld002.id, quantity: 1 },
+    { shipmentId: ship2.id, productId: pDmd001.id, quantity: 3 },
+    { shipmentId: ship3.id, productId: pTmp003.id, quantity: 4 },
+    { shipmentId: ship3.id, productId: pSlv001.id, quantity: 8 },
+    { shipmentId: ship4.id, productId: pPrl001.id, quantity: 2 },
+    { shipmentId: ship4.id, productId: pPlt001.id, quantity: 5 },
+  ];
+
+  for (const si of shipItems) {
+    await prisma.shipmentItem.create({ data: si });
+  }
+
+  console.log(`✅ ${shipItems.length} Shipment Items created.`);
+
+  // ──────────────────────────────────────────────
+  // 18. BOM Components (17)
+  // ──────────────────────────────────────────────
+  const bomComponents = [
+    // Lakshmi Temple Gold Necklace (GLD-001) components
+    { productId: pGld001.id, componentId: pGld003.id, quantity: 1.5 },   // Gold chain base
+    { productId: pGld001.id, componentId: pSlv003.id, quantity: 4 },     // Silver findings/clasps
+
+    // Mango Motif Haram (GLD-002) components
+    { productId: pGld002.id, componentId: pGld003.id, quantity: 2 },     // Two gold chains
+    { productId: pGld002.id, componentId: pPrl003.id, quantity: 1 },     // Pearl stringing
+
+    // Solitaire Diamond Ring (DMD-001) components
+    { productId: pDmd001.id, componentId: pDmd003.id, quantity: 0.8 },   // Band portion
+
+    // Filigree Jhumka (SLV-001) components
+    { productId: pSlv001.id, componentId: pSlv003.id, quantity: 2 },     // Silver stud base
+
+    // Chandbali Earrings (SLV-002) components
+    { productId: pSlv002.id, componentId: pSlv003.id, quantity: 3 },     // Multiple silver stud parts
+    { productId: pSlv002.id, componentId: pPrl003.id, quantity: 0.5 },   // Pearl drops
+
+    // Diamond Cut Platinum Bangle (PLT-002) components
+    { productId: pPlt002.id, componentId: pPlt003.id, quantity: 1.2 },   // Chain component
+
+    // Pearl Drop Earring & Pendant Set (PRL-002) components
+    { productId: pPrl002.id, componentId: pPrl003.id, quantity: 2 },     // Two pearl strings
+
+    // Naga Temple Choker (TMP-001) components
+    { productId: pTmp001.id, componentId: pGld003.id, quantity: 1 },     // Gold chain base
+    { productId: pTmp001.id, componentId: pSlv003.id, quantity: 6 },     // Silver findings
+
+    // Goddess Lakshmi Oddiyanam (TMP-002) components
+    { productId: pTmp002.id, componentId: pGld003.id, quantity: 3 },     // Multiple chain sections
+    { productId: pTmp002.id, componentId: pSlv003.id, quantity: 8 },     // Clasp mechanisms
+
+    // Temple Jhumki (TMP-003) components
+    { productId: pTmp003.id, componentId: pSlv003.id, quantity: 2 },     // Silver stud base
+
+    // Royal Kundan Bridal Set (KND-001) components
+    { productId: pKnd001.id, componentId: pKnd003.id, quantity: 1 },     // Maang tikka
+    { productId: pKnd001.id, componentId: pGld003.id, quantity: 2 },     // Gold chain sections
+
+    // Traditional South Indian Bridal Set (BRD-001) components
+    { productId: pBrd001.id, componentId: pGld001.id, quantity: 1 },     // Includes Lakshmi necklace
+    { productId: pBrd001.id, componentId: pTmp003.id, quantity: 1 },     // Includes temple jhumki
+  ];
+
+  for (const bom of bomComponents) {
+    await prisma.bomComponent.create({ data: bom });
+  }
+
+  console.log(`✅ ${bomComponents.length} BOM Components created.`);
+
+  // ──────────────────────────────────────────────
+  // 19. Demand Forecasts (12)
+  // ──────────────────────────────────────────────
+  const demandForecasts = [
+    { productId: pGld001.id, period: '2024-Q2', predictedDemand: 18, confidence: 0.87, model: 'Prophet' },
+    { productId: pGld003.id, period: '2024-Q2', predictedDemand: 65, confidence: 0.92, model: 'ARIMA' },
+    { productId: pDmd001.id, period: '2024-Q2', predictedDemand: 12, confidence: 0.78, model: 'Prophet' },
+    { productId: pSlv001.id, period: '2024-Q2', predictedDemand: 35, confidence: 0.85, model: 'MovingAverage' },
+    { productId: pSlv003.id, period: '2024-Q2', predictedDemand: 80, confidence: 0.9, model: 'ARIMA' },
+    { productId: pPlt001.id, period: '2024-Q2', predictedDemand: 14, confidence: 0.72, model: 'Prophet' },
+    { productId: pPrl001.id, period: '2024-Q2', predictedDemand: 8, confidence: 0.68, model: 'MovingAverage' },
+    { productId: pTmp001.id, period: '2024-Q2', predictedDemand: 6, confidence: 0.81, model: 'ARIMA' },
+    { productId: pKnd001.id, period: '2024-Q2', predictedDemand: 5, confidence: 0.75, model: 'Prophet' },
+    { productId: pBrd001.id, period: '2024-Q2', predictedDemand: 4, confidence: 0.65, model: 'MovingAverage' },
+    { productId: pGld002.id, period: '2024-Q3', predictedDemand: 10, confidence: 0.83, model: 'Prophet' },
+    { productId: pDmd002.id, period: '2024-Q3', predictedDemand: 15, confidence: 0.79, model: 'ARIMA' },
+  ];
+
+  for (const df of demandForecasts) {
+    await prisma.demandForecast.create({ data: df });
+  }
+
+  console.log(`✅ ${demandForecasts.length} Demand Forecasts created.`);
+
+  // ──────────────────────────────────────────────
+  // 20. Audit Logs
+  // ──────────────────────────────────────────────
+  const auditLogs = [
+    { user: userVikram.name, action: 'CREATE', module: 'Product', details: 'Created product: Lakshmi Temple Gold Necklace (GLD-001)' },
+    { user: userMeena.name, action: 'UPDATE', module: 'Inventory', details: 'Updated stock for GLD-003 at MUM-VLT: +50 units' },
+    { user: userRaj.name, action: 'CREATE', module: 'POS', details: 'Completed POS transaction POS-2024-001 via UPI' },
+    { user: userVikram.name, action: 'CREATE', module: 'PurchaseOrder', details: 'Created PO-2024-001 to Bharat Gold Refinery' },
+    { user: userMeena.name, action: 'APPROVE', module: 'PurchaseOrder', details: 'Approved PO-2024-001 total ₹12,56,000' },
+    { user: userVikram.name, action: 'CREATE', module: 'WorkOrder', details: 'Created WO-2024-001 for Lakshmi Temple Necklace batch' },
+    { user: userRaj.name, action: 'CREATE', module: 'SalesOrder', details: 'Created SO-2024-001 for Anita Krishnamurthy' },
+    { user: userMeena.name, action: 'UPDATE', module: 'Shipment', details: 'SHP-2024-001 marked as delivered via BlueDart' },
+    { user: userVikram.name, action: 'CREATE', module: 'Customer', details: 'Added wholesale customer: Priyal Agarwal' },
+    { user: userRaj.name, action: 'REFUND', module: 'POS', details: 'Refunded POS-2024-008 - Platinum Chain Bracelet returned' },
+    { user: userMeena.name, action: 'UPDATE', module: 'WorkOrder', details: 'WO-2024-002 status changed to in_progress' },
+    { user: userVikram.name, action: 'UPDATE', module: 'Product', details: 'Updated pricing for DMD-001: ₹2,45,000' },
+  ];
+
+  for (const al of auditLogs) {
+    await prisma.auditLog.create({ data: al });
+  }
+
+  console.log(`✅ ${auditLogs.length} Audit Logs created.`);
+
+  // ──────────────────────────────────────────────
+  // Summary
+  // ──────────────────────────────────────────────
+  console.log('\n══════════════════════════════════════════════');
+  console.log('  GoldGem ERP — Seed Complete!');
+  console.log('══════════════════════════════════════════════');
+  console.log(`  Users:               3`);
+  console.log(`  Categories:          8`);
+  console.log(`  Products:           24`);
+  console.log(`  Warehouses:          3`);
+  console.log(`  Inventory Items:    ${inventoryData.length}`);
+  console.log(`  Inventory Movements: ${movements.length}`);
+  console.log(`  Suppliers:           5`);
+  console.log(`  Purchase Orders:     6`);
+  console.log(`  PO Items:            ${poItems.length}`);
+  console.log(`  Customers:           8`);
+  console.log(`  Sales Orders:        5`);
+  console.log(`  POS Transactions:    ${posTransactions.length}`);
+  console.log(`  E-Commerce Orders:   ${ecoOrders.length}`);
+  console.log(`  Work Orders:         5`);
+  console.log(`  Work Order Products: ${woProducts.length}`);
+  console.log(`  Shipments:           4`);
+  console.log(`  Shipment Items:      ${shipItems.length}`);
+  console.log(`  BOM Components:     ${bomComponents.length}`);
+  console.log(`  Demand Forecasts:   ${demandForecasts.length}`);
+  console.log(`  Audit Logs:         ${auditLogs.length}`);
+  console.log('══════════════════════════════════════════════\n');
 }
 
 main()
-  .catch((e) => { console.error('❌ Seed failed:', e); process.exit(1) })
-  .finally(async () => { await prisma.$disconnect() })
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error('❌ Seed failed:', e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

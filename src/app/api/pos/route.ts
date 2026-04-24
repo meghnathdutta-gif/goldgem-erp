@@ -1,55 +1,181 @@
-import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
 export async function GET() {
   try {
     const transactions = await db.posTransaction.findMany({
-      include: { items: true },
       orderBy: { createdAt: 'desc' },
-      take: 50,
     })
-    return NextResponse.json(transactions)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+
+    // Parse the JSON items string for each transaction
+    const parsed = transactions.map((tx) => ({
+      ...tx,
+      items: JSON.parse(tx.items),
+    }))
+
+    return NextResponse.json(parsed)
+  } catch (error) {
+    console.error('POS GET error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch POS transactions' },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { items, customerName, paymentMethod, discount, userId } = body
+    const { items, subtotal, tax, discount, total, paymentMethod } = body
 
-    const subtotal = items.reduce((sum: number, item: { totalPrice: number }) => sum + item.totalPrice, 0)
-    const taxAmount = Math.round(subtotal * 0.03)
-    const totalAmount = subtotal + taxAmount - (discount || 0)
+    // Validate required fields
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { error: 'Missing required field: items (non-empty array)' },
+        { status: 400 }
+      )
+    }
 
-    const lastTrx = await db.posTransaction.findFirst({ orderBy: { createdAt: 'desc' } })
-    const lastNum = lastTrx ? parseInt(lastTrx.transactionNumber.split('-').pop() || '0') : 0
-    const transactionNumber = `TRX-2026-${String(lastNum + 1).padStart(5, '0')}`
+    if (subtotal === undefined || tax === undefined || total === undefined) {
+      return NextResponse.json(
+        { error: 'Missing required fields: subtotal, tax, total' },
+        { status: 400 }
+      )
+    }
 
-    const transaction = await db.posTransaction.create({
-      data: { transactionNumber, userId: userId || null, customerName: customerName || null, subtotal, taxAmount, discount: discount || 0, totalAmount, paymentMethod: paymentMethod || 'cash', items: { create: items } },
-      include: { items: true },
-    })
+    const validPaymentMethods = ['cash', 'card', 'upi']
+    if (!paymentMethod || !validPaymentMethods.includes(paymentMethod)) {
+      return NextResponse.json(
+        { error: `paymentMethod must be one of: ${validPaymentMethods.join(', ')}` },
+        { status: 400 }
+      )
+    }
 
-    // Deduct inventory for each sold item
+    // Validate each item
     for (const item of items) {
-      const invItem = await db.inventoryItem.findFirst({
-        where: { productId: item.productId, quantity: { gt: 0 } },
-        orderBy: { quantity: 'desc' },
-      })
-      if (invItem) {
-        await db.inventoryItem.update({ where: { id: invItem.id }, data: { quantity: Math.max(0, invItem.quantity - item.quantity) } })
-        await db.inventoryMovement.create({
-          data: { inventoryItemId: invItem.id, warehouseId: invItem.warehouseId, type: 'out', quantity: item.quantity, reference: transactionNumber, notes: 'POS Sale', performedBy: 'System' },
-        })
+      if (!item.productId || !item.name || item.price === undefined || item.quantity === undefined) {
+        return NextResponse.json(
+          { error: 'Each item must have productId, name, price, quantity' },
+          { status: 400 }
+        )
+      }
+      if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+        return NextResponse.json(
+          { error: 'Item quantity must be a positive number' },
+          { status: 400 }
+        )
       }
     }
 
-    return NextResponse.json(transaction, { status: 201 })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    // Auto-generate transactionNumber like "POS-2024-001"
+    const year = new Date().getFullYear()
+    const lastTransaction = await db.posTransaction.findFirst({
+      where: { transactionNumber: { startsWith: `POS-${year}-` } },
+      orderBy: { transactionNumber: 'desc' },
+    })
+
+    let nextSeq = 1
+    if (lastTransaction) {
+      const parts = lastTransaction.transactionNumber.split('-')
+      const lastSeq = parseInt(parts[parts.length - 1], 10)
+      if (!isNaN(lastSeq)) {
+        nextSeq = lastSeq + 1
+      }
+    }
+
+    const transactionNumber = `POS-${year}-${String(nextSeq).padStart(3, '0')}`
+
+    // Find the Main Vault (first warehouse)
+    const mainVault = await db.warehouse.findFirst({
+      orderBy: { createdAt: 'asc' },
+    })
+
+    if (!mainVault) {
+      return NextResponse.json(
+        { error: 'No warehouse found. Please seed the database.' },
+        { status: 500 }
+      )
+    }
+
+    // Process transaction atomically
+    const transaction = await db.$transaction(async (tx) => {
+      // Check stock availability and deduct inventory for each item
+      for (const item of items) {
+        const inventoryItem = await tx.inventoryItem.findUnique({
+          where: {
+            productId_warehouseId: {
+              productId: item.productId,
+              warehouseId: mainVault.id,
+            },
+          },
+        })
+
+        if (!inventoryItem) {
+          throw new Error(`Product "${item.name}" not found in Main Vault inventory`)
+        }
+
+        if (inventoryItem.quantity < item.quantity) {
+          throw new Error(
+            `Insufficient stock for "${item.name}". Available: ${inventoryItem.quantity}, Requested: ${item.quantity}`
+          )
+        }
+
+        // Deduct quantity from inventory
+        await tx.inventoryItem.update({
+          where: { id: inventoryItem.id },
+          data: { quantity: { decrement: item.quantity } },
+        })
+
+        // Create inventory movement record
+        await tx.inventoryMovement.create({
+          data: {
+            inventoryItemId: inventoryItem.id,
+            type: 'out',
+            quantity: item.quantity,
+            reference: transactionNumber,
+            notes: `POS sale - ${paymentMethod}`,
+          },
+        })
+      }
+
+      // Create the POS transaction
+      const posTransaction = await tx.posTransaction.create({
+        data: {
+          transactionNumber,
+          items: JSON.stringify(items),
+          subtotal,
+          tax,
+          discount: discount ?? 0,
+          total,
+          paymentMethod,
+          status: 'completed',
+        },
+      })
+
+      return posTransaction
+    })
+
+    return NextResponse.json(
+      { ...transaction, items: JSON.parse(transaction.items) },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error('POS POST error:', error)
+
+    if (
+      error instanceof Error &&
+      (error.message.includes('Insufficient stock') ||
+        error.message.includes('not found in Main Vault'))
+    ) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to process POS sale' },
+      { status: 500 }
+    )
   }
 }

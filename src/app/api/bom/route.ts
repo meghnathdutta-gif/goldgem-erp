@@ -1,23 +1,45 @@
-import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const productId = searchParams.get('productId')
-
-    if (productId) {
-      const components = await db.bomComponent.findMany({ where: { productId }, include: { component: true, product: true } })
-      return NextResponse.json(components)
-    }
-
-    const manufacturedProducts = await db.product.findMany({
+    const products = await db.product.findMany({
       where: { isManufactured: true },
-      include: { bomComponents: { include: { component: true } }, category: true },
+      include: {
+        bomComponents: {
+          include: {
+            component: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                price: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
     })
-    return NextResponse.json(manufacturedProducts)
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+
+    const bomList = products.map((product) => ({
+      productId: product.id,
+      productName: product.name,
+      sku: product.sku,
+      components: product.bomComponents.map((bc) => ({
+        componentId: bc.component.id,
+        componentName: bc.component.name,
+        sku: bc.component.sku,
+        quantity: bc.quantity,
+      })),
+    }))
+
+    return NextResponse.json(bomList)
+  } catch (error) {
+    console.error('BOM GET error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch Bill of Materials' },
+      { status: 500 }
+    )
   }
 }

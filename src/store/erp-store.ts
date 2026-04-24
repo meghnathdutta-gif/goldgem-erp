@@ -1,17 +1,19 @@
 import { create } from 'zustand'
 
-export type ModuleKey = 'dashboard' | 'inventory' | 'supply-chain' | 'manufacturing' | 'pos' | 'ecommerce' | 'ai-insights'
+type Module = 'dashboard' | 'inventory' | 'supply-chain' | 'manufacturing' | 'pos' | 'ecommerce' | 'ai-insights'
 
 interface ERPState {
-  activeModule: ModuleKey
-  sidebarCollapsed: boolean
-  setActiveModule: (m: ModuleKey) => void
-  toggleCollapsed: () => void
+  activeModule: Module
+  sidebarOpen: boolean
+  setActiveModule: (module: Module) => void
+  toggleSidebar: () => void
+  setSidebarOpen: (open: boolean) => void
 }
 
 export const useERPStore = create<ERPState>((set) => ({
   activeModule: 'dashboard',
-  sidebarCollapsed: false,
-  setActiveModule: (m) => set({ activeModule: m }),
-  toggleCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  sidebarOpen: true,
+  setActiveModule: (module) => set({ activeModule: module }),
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  setSidebarOpen: (open) => set({ sidebarOpen: open }),
 }))
