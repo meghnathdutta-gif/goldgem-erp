@@ -87,13 +87,13 @@ export async function POST(request: NextRequest) {
     }
     const poNumber = `PO-${year}-${String(nextSeq).padStart(3, '0')}`
 
-    // Calculate totalAmount and taxAmount (3% GST)
+    // Calculate totalAmount and taxAmount (8% sales tax)
     const totalAmount = items.reduce(
       (sum: number, item: { quantity: number; unitPrice: number }) =>
         sum + item.quantity * item.unitPrice,
       0
     )
-    const taxAmount = Math.round(totalAmount * 0.03 * 100) / 100
+    const taxAmount = Math.round(totalAmount * 0.08 * 100) / 100
 
     // Create PO with items
     const purchaseOrder = await db.purchaseOrder.create({

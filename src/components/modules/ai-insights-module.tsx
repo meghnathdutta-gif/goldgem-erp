@@ -52,7 +52,7 @@ import {
   Legend,
 } from 'recharts'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 
@@ -588,14 +588,14 @@ export function AiInsightsModule() {
                         <TableCell className="font-medium">{item.productName}</TableCell>
                         <TableCell className="text-right tabular-nums">
                           <span className={item.currentStock === 0 ? 'text-red-600 dark:text-red-400 font-semibold' : ''}>
-                            {item.currentStock.toLocaleString('en-IN')}
+                            {item.currentStock.toLocaleString('en-US')}
                           </span>
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {item.reorderPoint.toLocaleString('en-IN')}
+                          {item.reorderPoint.toLocaleString('en-US')}
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-medium text-amber-700 dark:text-amber-400">
-                          {item.suggestedQty.toLocaleString('en-IN')}
+                          {item.suggestedQty.toLocaleString('en-US')}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="secondary" className={`text-xs ${urgency.class}`}>
@@ -657,12 +657,12 @@ export function AiInsightsModule() {
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Current Qty</span>
                           <span className={`font-bold ${anomaly.quantity === 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                            {anomaly.quantity.toLocaleString('en-IN')}
+                            {anomaly.quantity.toLocaleString('en-US')}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Reorder Point</span>
-                          <span className="font-medium">{anomaly.reorderPoint.toLocaleString('en-IN')}</span>
+                          <span className="font-medium">{anomaly.reorderPoint.toLocaleString('en-US')}</span>
                         </div>
                       </div>
                       {anomaly.severity === 'out_of_stock' && (

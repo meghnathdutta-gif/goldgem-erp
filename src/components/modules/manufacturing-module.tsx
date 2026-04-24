@@ -43,7 +43,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hammer, Wrench, Plus, Minus, Calendar, Layers } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -181,7 +181,7 @@ function getProgressColor(percent: number): string {
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('en-IN', {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -627,7 +627,7 @@ export function ManufacturingModule() {
             <Hammer className="h-5 w-5 text-amber-700 dark:text-amber-400" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-amber-800 dark:text-amber-300">
-            Karigarkhana
+            Manufacturing
           </h2>
         </div>
       </div>

@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/select'
 import { Truck, Package, Star, Plus, Minus, MapPin } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -188,7 +188,7 @@ function renderStars(rating: number) {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -497,7 +497,7 @@ function CreatePODialog({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-medium text-amber-700 dark:text-amber-400">
-                  {formatINR(
+                  {formatCurrency(
                     form.lineItems
                       .filter((item) => item.productId)
                       .reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0) * (parseFloat(item.unitPrice) || 0), 0)
@@ -855,10 +855,10 @@ export function SupplyChainModule() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-medium text-amber-700 dark:text-amber-400 tabular-nums">
-                            {formatINR(po.totalAmount)}
+                            {formatCurrency(po.totalAmount)}
                           </TableCell>
                           <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">
-                            {formatINR(po.tax)}
+                            {formatCurrency(po.tax)}
                           </TableCell>
                           <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                             {formatDate(po.createdAt)}

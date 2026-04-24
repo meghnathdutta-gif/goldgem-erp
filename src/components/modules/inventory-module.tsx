@@ -39,7 +39,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Search, Plus, Package, AlertTriangle, Warehouse } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -781,10 +781,10 @@ export function InventoryModule() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium text-amber-700 dark:text-amber-400">
-                          {formatINR(product.price)}
+                          {formatCurrency(product.price)}
                         </TableCell>
                         <TableCell className="text-right hidden lg:table-cell text-muted-foreground">
-                          {formatINR(product.costPrice)}
+                          {formatCurrency(product.costPrice)}
                         </TableCell>
                         <TableCell className="text-right hidden lg:table-cell text-muted-foreground">
                           {product.weight != null ? `${product.weight}g` : '—'}
@@ -845,7 +845,7 @@ export function InventoryModule() {
                     <Progress value={utilization} className={`h-2 ${getProgressColor(utilization)}`} />
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
-                        {wh.totalQuantity.toLocaleString('en-IN')} / {wh.capacity.toLocaleString('en-IN')} items
+                        {wh.totalQuantity.toLocaleString('en-US')} / {wh.capacity.toLocaleString('en-US')} items
                       </span>
                       <span className="text-muted-foreground">
                         {wh._count.inventoryItems} product{wh._count.inventoryItems !== 1 ? 's' : ''}

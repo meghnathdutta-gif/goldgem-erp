@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, address, type, gstNumber } = body
+    const { name, email, phone, address, type, taxId } = body
 
     // Validate required fields
     if (!name) {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         phone: phone ?? null,
         address: address ?? null,
         type: type ?? 'retail',
-        gstNumber: gstNumber ?? null,
+        taxId: taxId ?? null,
       },
       include: {
         _count: {

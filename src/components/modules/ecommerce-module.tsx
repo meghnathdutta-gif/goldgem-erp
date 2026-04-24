@@ -38,7 +38,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -402,7 +402,7 @@ export function EcommerceModule() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tracking-tight text-foreground">{totalOrders.toLocaleString('en-IN')}</p>
+            <p className="text-2xl font-bold tracking-tight text-foreground">{totalOrders.toLocaleString('en-US')}</p>
             <p className="mt-1 text-xs text-muted-foreground">All time orders</p>
           </CardContent>
         </Card>
@@ -415,7 +415,7 @@ export function EcommerceModule() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">{pendingOrders.toLocaleString('en-IN')}</p>
+            <p className="text-2xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">{pendingOrders.toLocaleString('en-US')}</p>
             <p className="mt-1 text-xs text-muted-foreground">Awaiting processing</p>
           </CardContent>
         </Card>
@@ -428,7 +428,7 @@ export function EcommerceModule() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">{deliveredOrders.toLocaleString('en-IN')}</p>
+            <p className="text-2xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">{deliveredOrders.toLocaleString('en-US')}</p>
             <p className="mt-1 text-xs text-muted-foreground">Successfully delivered</p>
           </CardContent>
         </Card>
@@ -441,7 +441,7 @@ export function EcommerceModule() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tracking-tight text-amber-700 dark:text-amber-400">{formatINR(totalRevenue)}</p>
+            <p className="text-2xl font-bold tracking-tight text-amber-700 dark:text-amber-400">{formatCurrency(totalRevenue)}</p>
             <p className="mt-1 text-xs text-muted-foreground">From delivered orders</p>
           </CardContent>
         </Card>
@@ -518,7 +518,7 @@ export function EcommerceModule() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
-                        {formatINR(order.totalAmount)}
+                        {formatCurrency(order.totalAmount)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge
@@ -537,7 +537,7 @@ export function EcommerceModule() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right text-sm text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                        {new Date(order.createdAt).toLocaleDateString('en-US', {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric',

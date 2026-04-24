@@ -30,7 +30,7 @@ import {
   Gem,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ interface CartItem {
   quantity: number
 }
 
-type PaymentMethod = 'cash' | 'card' | 'upi'
+type PaymentMethod = 'cash' | 'card' | 'digital'
 
 interface PosPayload {
   items: { productId: string; name: string; price: number; quantity: number }[]
@@ -89,7 +89,7 @@ interface PosPayload {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const GST_RATE = 0.03
+const TAX_RATE = 0.08
 
 function getStockForProduct(productId: string, stockMap: Record<string, number>): number {
   return stockMap[productId] ?? 0
@@ -211,7 +211,7 @@ function ProductCard({
 
         {/* Price */}
         <p className="text-base font-bold text-amber-700 dark:text-amber-400">
-          {formatINR(product.price)}
+          {formatCurrency(product.price)}
         </p>
 
         {/* Weight + Purity */}
@@ -259,7 +259,7 @@ function CartItemRow({
       {/* Product info */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{item.name}</p>
-        <p className="text-xs text-muted-foreground">{formatINR(item.price)} each</p>
+        <p className="text-xs text-muted-foreground">{formatCurrency(item.price)} each</p>
       </div>
 
       {/* Quantity controls */}
@@ -290,7 +290,7 @@ function CartItemRow({
       {/* Line total & remove */}
       <div className="flex flex-col items-end shrink-0 gap-1">
         <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
-          {formatINR(lineTotal)}
+          {formatCurrency(lineTotal)}
         </p>
         <Button
           variant="ghost"
@@ -373,7 +373,7 @@ export function PosModule() {
   }
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const tax = Math.round(subtotal * GST_RATE)
+  const tax = Math.round(subtotal * TAX_RATE)
   const discountAmount = Math.max(0, parseFloat(discount) || 0)
   const total = Math.max(0, subtotal + tax - discountAmount)
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -464,7 +464,7 @@ export function PosModule() {
     },
     onSuccess: () => {
       toast.success('Sale completed!', {
-        description: `Payment of ${formatINR(total)} via ${paymentMethod.toUpperCase()} received.`,
+        description: `Payment of ${formatCurrency(total)} via ${paymentMethod.toUpperCase()} received.`,
         duration: 4000,
         icon: <CheckCircle className="h-5 w-5 text-emerald-500" />,
       })
@@ -683,11 +683,11 @@ export function PosModule() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span className="tabular-nums">{formatINR(subtotal)}</span>
+                      <span className="tabular-nums">{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">GST (3%)</span>
-                      <span className="tabular-nums">{formatINR(tax)}</span>
+                      <span className="text-muted-foreground">Sales Tax (8%)</span>
+                      <span className="tabular-nums">{formatCurrency(tax)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm gap-2">
                       <Label htmlFor="discount" className="text-muted-foreground shrink-0 cursor-pointer">
@@ -707,7 +707,7 @@ export function PosModule() {
                     <div className="flex items-center justify-between">
                       <span className="text-base font-bold">Total</span>
                       <span className="text-lg font-bold text-amber-700 dark:text-amber-400 tabular-nums">
-                        {formatINR(total)}
+                        {formatCurrency(total)}
                       </span>
                     </div>
                   </div>
@@ -753,17 +753,17 @@ export function PosModule() {
                       </Label>
 
                       <Label
-                        htmlFor="pay-upi"
+                        htmlFor="pay-digital"
                         className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 cursor-pointer transition-colors ${
-                          paymentMethod === 'upi'
+                          paymentMethod === 'digital'
                             ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
                             : 'hover:bg-accent'
                         }`}
                       >
-                        <RadioGroupItem value="upi" id="pay-upi" className="sr-only" />
-                        <Smartphone className={`h-5 w-5 ${paymentMethod === 'upi' ? 'text-amber-600' : 'text-muted-foreground'}`} />
-                        <span className={`text-xs font-medium ${paymentMethod === 'upi' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}`}>
-                          UPI
+                        <RadioGroupItem value="digital" id="pay-digital" className="sr-only" />
+                        <Smartphone className={`h-5 w-5 ${paymentMethod === 'digital' ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                        <span className={`text-xs font-medium ${paymentMethod === 'digital' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                          Digital
                         </span>
                       </Label>
                     </RadioGroup>
@@ -783,7 +783,7 @@ export function PosModule() {
                     ) : (
                       <span className="flex items-center gap-2">
                         <CheckCircle className="h-5 w-5" />
-                        Complete Sale · {formatINR(total)}
+                        Complete Sale · {formatCurrency(total)}
                       </span>
                     )}
                   </Button>

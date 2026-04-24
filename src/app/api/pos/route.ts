@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const validPaymentMethods = ['cash', 'card', 'upi']
+    const validPaymentMethods = ['cash', 'card', 'digital']
     if (!paymentMethod || !validPaymentMethods.includes(paymentMethod)) {
       return NextResponse.json(
         { error: `paymentMethod must be one of: ${validPaymentMethods.join(', ')}` },

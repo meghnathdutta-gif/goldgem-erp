@@ -32,7 +32,7 @@ import {
   Legend,
 } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
-import { formatINR } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -152,16 +152,16 @@ function timeAgo(dateStr: string): string {
   return `${diffDays}d ago`
 }
 
-// ─── Custom Tooltip for INR ──────────────────────────────────────────────────
+// ─── Custom Tooltip for Currency ──────────────────────────────────────────────────
 
-function INRTooltipContent({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color?: string }>; label?: string }) {
+function CurrencyTooltipContent({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color?: string }>; label?: string }) {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
       <p className="mb-1 font-medium text-muted-foreground">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="font-mono font-medium tabular-nums text-foreground">
-          {entry.name}: {formatINR(entry.value)}
+          {entry.name}: {formatCurrency(entry.value)}
         </p>
       ))}
     </div>
@@ -324,7 +324,7 @@ export function DashboardModule() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KPICard
           title="Total Revenue"
-          value={formatINR(kpis.totalRevenue)}
+          value={formatCurrency(kpis.totalRevenue)}
           description="Across all channels"
           icon={<TrendingUp className="h-4 w-4 text-amber-700" />}
           iconBgClass="bg-amber-100 dark:bg-amber-900/30"
@@ -333,13 +333,13 @@ export function DashboardModule() {
         />
         <KPICard
           title="Total Orders"
-          value={kpis.totalOrders.toLocaleString('en-IN')}
+          value={kpis.totalOrders.toLocaleString('en-US')}
           description="POS, e-com & wholesale"
           icon={<ShoppingCart className="h-4 w-4 text-foreground" />}
         />
         <KPICard
           title="Vault Value"
-          value={formatINR(kpis.vaultValue)}
+          value={formatCurrency(kpis.vaultValue)}
           description="Current inventory value"
           icon={<Vault className="h-4 w-4 text-yellow-600" />}
           iconBgClass="bg-yellow-100 dark:bg-yellow-900/30"
@@ -347,19 +347,19 @@ export function DashboardModule() {
         />
         <KPICard
           title="Active Work Orders"
-          value={kpis.activeWorkOrders.toLocaleString('en-IN')}
+          value={kpis.activeWorkOrders.toLocaleString('en-US')}
           description="Currently in progress"
           icon={<Hammer className="h-4 w-4 text-foreground" />}
         />
         <KPICard
           title="Pending Shipments"
-          value={kpis.pendingShipments.toLocaleString('en-IN')}
+          value={kpis.pendingShipments.toLocaleString('en-US')}
           description="Awaiting delivery"
           icon={<Truck className="h-4 w-4 text-foreground" />}
         />
         <KPICard
           title="Low Stock Alerts"
-          value={kpis.lowStockAlerts.toLocaleString('en-IN')}
+          value={kpis.lowStockAlerts.toLocaleString('en-US')}
           description="Below reorder point"
           icon={<AlertTriangle className="h-4 w-4 text-red-600" />}
           iconBgClass={kpis.lowStockAlerts > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-muted'}
@@ -367,13 +367,13 @@ export function DashboardModule() {
         />
         <KPICard
           title="Total Designs"
-          value={kpis.totalDesigns.toLocaleString('en-IN')}
+          value={kpis.totalDesigns.toLocaleString('en-US')}
           description="Active product catalog"
           icon={<Gem className="h-4 w-4 text-foreground" />}
         />
         <KPICard
           title="Total Customers"
-          value={kpis.totalCustomers.toLocaleString('en-IN')}
+          value={kpis.totalCustomers.toLocaleString('en-US')}
           description="Registered accounts"
           icon={<Users className="h-4 w-4 text-foreground" />}
         />
@@ -414,7 +414,7 @@ export function DashboardModule() {
                 <ChartTooltip
                   content={
                     <ChartTooltipContent
-                      formatter={(value) => formatINR(value as number)}
+                      formatter={(value) => formatCurrency(value as number)}
                     />
                   }
                 />
@@ -459,7 +459,7 @@ export function DashboardModule() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => formatINR(value)}
+                  formatter={(value: number) => formatCurrency(value)}
                   contentStyle={{
                     borderRadius: '8px',
                     fontSize: '12px',
@@ -593,8 +593,8 @@ export function DashboardModule() {
                     <TableRow key={product.sku}>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className="text-muted-foreground">{product.sku}</TableCell>
-                      <TableCell className="text-right">{product.quantity.toLocaleString('en-IN')}</TableCell>
-                      <TableCell className="text-right font-medium">{formatINR(product.value)}</TableCell>
+                      <TableCell className="text-right">{product.quantity.toLocaleString('en-US')}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(product.value)}</TableCell>
                     </TableRow>
                   ))
                 )}

@@ -5,7 +5,7 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "GoldGem ERP - Jewellery Business Management",
-  description: "Complete ERP solution for the Indian jewellery industry - Manage inventory, manufacturing, POS, ecommerce, and AI insights",
+  description: "Complete ERP solution for the jewellery industry - Manage inventory, manufacturing, POS, ecommerce, and AI insights",
 }
 
 export default function RootLayout({

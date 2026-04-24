@@ -35,7 +35,7 @@ const navItems: { id: Module; label: string; icon: React.ElementType; badge?: st
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'inventory', label: 'Inventory & Vault', icon: Package },
   { id: 'supply-chain', label: 'Supply Chain', icon: Truck },
-  { id: 'manufacturing', label: 'Karigarkhana', icon: Hammer },
+  { id: 'manufacturing', label: 'Manufacturing', icon: Hammer },
   { id: 'pos', label: 'Counter Sale / POS', icon: ShoppingCart },
   { id: 'ecommerce', label: 'Online Store', icon: Globe },
   { id: 'ai-insights', label: 'AI Insights', icon: Brain },
@@ -159,10 +159,10 @@ function Sidebar() {
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-semibold text-primary">VS</span>
+                <span className="text-sm font-semibold text-primary">AC</span>
               </div>
               <div className="overflow-hidden">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">Vikram Sharma</p>
+                <p className="text-sm font-medium text-sidebar-foreground truncate">Alex Carter</p>
                 <p className="text-xs text-sidebar-foreground/60 truncate">Admin</p>
               </div>
             </div>
