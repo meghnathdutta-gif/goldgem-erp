@@ -1,0 +1,27 @@
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://21.0.2.70:3000
+- Environments: .env
+✓ Ready in 375ms
+
+ GET / 200 in 1855ms (next.js: 1524ms, application-code: 331ms)
+ GET / 200 in 28ms (next.js: 1869µs, application-code: 26ms)
+ GET / 200 in 72ms (next.js: 6ms, application-code: 66ms)
+ GET /api/dashboard 200 in 176ms (next.js: 98ms, application-code: 78ms)
+ GET /api/health 200 in 159ms (next.js: 153ms, application-code: 5ms)
+ GET /api/seed 200 in 57ms (next.js: 36ms, application-code: 21ms)
+ GET /api/dashboard 200 in 29ms (next.js: 1746µs, application-code: 28ms)
+ GET /api/products 200 in 127ms (next.js: 112ms, application-code: 14ms)
+ GET /api/categories 200 in 99ms (next.js: 91ms, application-code: 8ms)
+ GET /api/warehouses 200 in 100ms (next.js: 90ms, application-code: 10ms)
+ GET /api/suppliers 200 in 92ms (next.js: 86ms, application-code: 6ms)
+ GET /api/purchase-orders 200 in 100ms (next.js: 91ms, application-code: 9ms)
+ GET /api/shipments 200 in 97ms (next.js: 88ms, application-code: 9ms)
+ GET /api/sales-orders 200 in 99ms (next.js: 91ms, application-code: 8ms)
+ GET /api/customers 200 in 102ms (next.js: 94ms, application-code: 8ms)
+ GET /api/work-orders 200 in 101ms (next.js: 93ms, application-code: 7ms)
+ GET /api/bom 200 in 109ms (next.js: 98ms, application-code: 11ms)
+ GET /api/pos 200 in 104ms (next.js: 97ms, application-code: 7ms)
+ GET /api/ecommerce 200 in 105ms (next.js: 97ms, application-code: 8ms)
+ GET /api/ai/forecast 200 in 132ms (next.js: 115ms, application-code: 17ms)
+ GET / 200 in 42ms (next.js: 2ms, application-code: 40ms)

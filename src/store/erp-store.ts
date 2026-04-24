@@ -5,13 +5,13 @@ export type ModuleKey = 'dashboard' | 'inventory' | 'supply-chain' | 'manufactur
 interface ERPState {
   activeModule: ModuleKey
   sidebarCollapsed: boolean
-  setActiveModule: (module: ModuleKey) => void
+  setActiveModule: (m: ModuleKey) => void
   toggleCollapsed: () => void
 }
 
 export const useERPStore = create<ERPState>((set) => ({
   activeModule: 'dashboard',
   sidebarCollapsed: false,
-  setActiveModule: (module) => set({ activeModule: module }),
+  setActiveModule: (m) => set({ activeModule: m }),
   toggleCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 }))

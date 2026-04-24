@@ -18,8 +18,8 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  salesOrders      SalesOrder[]
-  posTransactions  PosTransaction[]
+  salesOrders     SalesOrder[]
+  posTransactions PosTransaction[]
 }
 
 model Category {
@@ -51,8 +51,8 @@ model Product {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   inventoryItems     InventoryItem[]
-  bomComponents      BomComponent[]     @relation("ProductBom")
-  bomAssemblies      BomComponent[]     @relation("ProductAssembly")
+  bomComponents      BomComponent[]  @relation("ProductBom")
+  bomAssemblies      BomComponent[]  @relation("ProductAssembly")
   workOrderProducts  WorkOrderProduct[]
   orderItems         SalesOrderItem[]
   posItems           PosTransactionItem[]
@@ -158,21 +158,21 @@ model PurchaseOrderItem {
 }
 
 model Shipment {
-  id              String         @id @default(cuid())
-  shipmentNumber  String         @unique
+  id             String        @id @default(cuid())
+  shipmentNumber String        @unique
   purchaseOrderId String?
-  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
-  status          String         @default("pending")
-  carrier         String?
-  trackingNumber  String?
-  shippingDate    DateTime?
-  deliveryDate    DateTime?
-  origin          String?
-  destination     String?
-  cost            Float          @default(0)
-  notes           String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  purchaseOrder  PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  status         String        @default("pending")
+  carrier        String?
+  trackingNumber String?
+  shippingDate   DateTime?
+  deliveryDate   DateTime?
+  origin         String?
+  destination    String?
+  cost           Float         @default(0)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   items ShipmentItem[]
 }
 

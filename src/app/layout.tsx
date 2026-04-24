@@ -1,37 +1,25 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
-import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "GoldGem — Jewellery ERP System",
-  description: "Complete ERP system for the jewellery industry — inventory, manufacturing, POS, e-commerce, and AI insights",
+  description: "Complete ERP for Jewellery Business — Manufacturing, Supply Chain, Vault Inventory, Counter Sales & Online Store with AI Insights",
+  keywords: ["GoldGem", "Jewellery ERP", "Gold", "Diamond", "Manufacturing", "Supply Chain", "Inventory", "POS", "E-Commerce", "AI"],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
         <Providers>
           {children}
-          <Toaster position="top-right" richColors />
+          <Toaster richColors position="top-right" />
         </Providers>
       </body>
     </html>
