@@ -9,7 +9,7 @@ set -e
 echo "🔧 Switching Prisma schema from SQLite to PostgreSQL (Neon)..."
 
 # Copy Neon schema over the default one
-cp prisma/schema.neon.prisma prisma/schema.prisma
+cp prisma/schema.postgres.prisma prisma/schema.prisma
 
 echo "✅ Schema switched to PostgreSQL!"
 echo ""

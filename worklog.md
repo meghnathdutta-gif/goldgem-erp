@@ -43,3 +43,22 @@ Stage Summary:
 - Database seeded with 24 products, 26 inventory items, 8 customers, etc.
 - Amber/gold jewellery-themed design throughout
 - Ready for Vercel + Neon PostgreSQL free cloud deployment
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Generate comprehensive step-by-step cloud deployment guide for GoldGem ERP
+
+Work Log:
+- Read all project configuration files (package.json, schema.prisma, schema.postgres.prisma, vercel.json, .env, seed.ts)
+- Fixed switch-to-neon.sh (referenced wrong filename schema.neon.prisma → schema.postgres.prisma)
+- Updated vercel.json region from bom1 (Mumbai) to iad1 (US East) for global accessibility
+- Generated color palette using pdf.py palette.generate
+- Created comprehensive 12-section deployment guide PDF using ReportLab
+- Added PDF metadata and verified fonts pass font.check
+- Sections covered: Overview, Prerequisites, Neon Setup, GitHub Push, Vercel Deploy, DB Seeding, Verification, Post-Deploy Config, Free Tier Limits, Troubleshooting, Quick Reference, Alternative Platforms
+
+Stage Summary:
+- Deployment guide PDF saved to /home/z/my-project/download/GoldGem-ERP-Cloud-Deployment-Guide.pdf
+- Fixed bug in switch-to-neon.sh (would have caused deployment failure)
+- Changed vercel.json region to iad1 (US East) for better global latency
