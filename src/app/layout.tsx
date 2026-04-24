@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "GoldGem — Jewellery ERP System",
-  description: "GoldGem: Complete ERP for Jewellery Business — Manufacturing (Karigarkhana), Supply Chain, Vault Inventory, Counter Sales & Online Store with AI/ML Insights",
-  keywords: ["GoldGem", "Jewellery ERP", "Gold", "Diamond", "Jewellery Manufacturing", "Supply Chain", "Inventory", "POS", "E-Commerce", "AI/ML"],
+  description: "Complete ERP system for the jewellery industry — inventory, manufacturing, POS, e-commerce, and AI insights",
 };
 
 export default function RootLayout({
@@ -28,11 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
           {children}
-          <Toaster richColors position="top-right" />
+          <Toaster position="top-right" richColors />
         </Providers>
       </body>
     </html>
