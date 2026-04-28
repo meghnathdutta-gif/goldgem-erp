@@ -143,10 +143,10 @@ export async function GET() {
       topProducts,
       recentActivity,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Dashboard error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
+      { error: 'Failed to fetch dashboard data', details: error?.message || String(error) },
       { status: 500 }
     )
   }
