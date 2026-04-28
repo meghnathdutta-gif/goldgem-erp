@@ -21,7 +21,9 @@
 # debug
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
+yarn-error-log*
+dev.log
+server.log
 
 # local env files
 .env
@@ -40,3 +42,16 @@ prisma/migrations/
 # database
 *.db
 *.db-journal
+
+# dev files
+skills/
+agent-ctx/
+download/
+upload/
+Caddyfile
+generate-deployment-pdf.py
+generate-deployment-guide.py
+switch-to-neon.sh
+switch-to-sqlite.sh
+worklog.md
+.zscripts/
