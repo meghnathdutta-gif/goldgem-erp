@@ -54,16 +54,17 @@ export async function GET() {
 
     // --- Inventory Optimization ---
     // Find inventory items where quantity <= reorderPoint
-    const lowStockItems = await db.inventoryItem.findMany({
-      where: {
-        quantity: { lte: db.inventoryItem.fields.reorderPoint },
-      },
+    // Prisma does not support column-to-column comparisons, so fetch all and filter in JS
+    const allItemsForOptimization = await db.inventoryItem.findMany({
       include: {
         product: {
           select: { id: true, name: true, sku: true },
         },
       },
     })
+    const lowStockItems = allItemsForOptimization.filter(
+      (item) => item.quantity <= item.reorderPoint
+    )
 
     const inventoryOptimization = lowStockItems.map((item) => ({
       productId: item.productId,

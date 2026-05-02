@@ -64,9 +64,9 @@ interface Supplier {
 
 interface PurchaseOrderLineItem {
   productId: string
-  productName: string
   quantity: number
   unitPrice: number
+  product: { id: string; name: string; sku: string; price: number; costPrice: number }
 }
 
 interface PurchaseOrder {
@@ -76,11 +76,19 @@ interface PurchaseOrder {
   supplier: { id: string; name: string; code: string }
   status: 'draft' | 'sent' | 'confirmed' | 'received' | 'cancelled'
   totalAmount: number
-  tax: number
+  taxAmount: number
   notes: string | null
-  lineItems: PurchaseOrderLineItem[]
+  items: PurchaseOrderLineItem[]
   createdAt: string
   updatedAt: string
+}
+
+interface ShipmentItem {
+  id: string
+  shipmentId: string
+  productId: string
+  product: { id: string; name: string; sku: string }
+  quantity: number
 }
 
 interface Shipment {
@@ -91,8 +99,7 @@ interface Shipment {
   destination: string
   trackingNumber: string | null
   status: 'pending' | 'shipped' | 'in_transit' | 'delivered'
-  itemCount: number
-  purchaseOrderId: string | null
+  items: ShipmentItem[]
   createdAt: string
   updatedAt: string
 }
@@ -276,7 +283,7 @@ function CreatePODialog({
   const createPO = useMutation({
     mutationFn: async (data: {
       supplierId: string
-      lineItems: { productId: string; quantity: number; unitPrice: number }[]
+      items: { productId: string; quantity: number; unitPrice: number }[]
       notes?: string
     }) => {
       const res = await fetch('/api/purchase-orders', {
@@ -361,7 +368,7 @@ function CreatePODialog({
 
     createPO.mutate({
       supplierId: form.supplierId,
-      lineItems: validItems.map((item) => ({
+      items: validItems.map((item) => ({
         productId: item.productId,
         quantity: parseInt(item.quantity, 10),
         unitPrice: parseFloat(item.unitPrice),
@@ -827,6 +834,7 @@ export function SupplyChainModule() {
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Total Amount (₹)</TableHead>
                         <TableHead className="text-right hidden sm:table-cell">Tax (₹)</TableHead>
+                        <TableHead className="hidden md:table-cell">Items</TableHead>
                         <TableHead className="hidden md:table-cell">Date</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -858,7 +866,10 @@ export function SupplyChainModule() {
                             {formatCurrency(po.totalAmount)}
                           </TableCell>
                           <TableCell className="text-right hidden sm:table-cell text-muted-foreground tabular-nums">
-                            {formatCurrency(po.tax)}
+                            {formatCurrency(po.taxAmount)}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                            {po.items?.length ?? 0} item{(po.items?.length ?? 0) !== 1 ? 's' : ''}
                           </TableCell>
                           <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                             {formatDate(po.createdAt)}
@@ -970,7 +981,7 @@ export function SupplyChainModule() {
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Package className="h-3 w-3" />
                                 <span>
-                                  {shipment.itemCount} item{shipment.itemCount !== 1 ? 's' : ''}
+                                  {shipment.items?.length ?? 0} item{(shipment.items?.length ?? 0) !== 1 ? 's' : ''}
                                 </span>
                               </div>
                             </CardContent>

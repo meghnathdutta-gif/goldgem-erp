@@ -85,57 +85,52 @@ export async function POST(request: Request) {
 
     const transactionNumber = `POS-${year}-${String(nextSeq).padStart(3, '0')}`
 
-    // Find the Main Vault (first warehouse)
-    const mainVault = await db.warehouse.findFirst({
-      orderBy: { createdAt: 'asc' },
-    })
-
-    if (!mainVault) {
-      return NextResponse.json(
-        { error: 'No warehouse found. Please seed the database.' },
-        { status: 500 }
-      )
-    }
-
     // Process transaction atomically
     const transaction = await db.$transaction(async (tx) => {
       // Check stock availability and deduct inventory for each item
       for (const item of items) {
-        const inventoryItem = await tx.inventoryItem.findUnique({
+        // Find all inventory entries for this product across all warehouses
+        const inventoryItems = await tx.inventoryItem.findMany({
           where: {
-            productId_warehouseId: {
-              productId: item.productId,
-              warehouseId: mainVault.id,
-            },
+            productId: item.productId,
+            quantity: { gt: 0 },
           },
+          orderBy: { quantity: 'desc' },
+          include: { warehouse: { select: { name: true } } },
         })
 
-        if (!inventoryItem) {
-          throw new Error(`Product "${item.name}" not found in Main Vault inventory`)
-        }
+        const totalAvailable = inventoryItems.reduce((sum, i) => sum + i.quantity, 0)
 
-        if (inventoryItem.quantity < item.quantity) {
+        if (totalAvailable < item.quantity) {
           throw new Error(
-            `Insufficient stock for "${item.name}". Available: ${inventoryItem.quantity}, Requested: ${item.quantity}`
+            `Insufficient stock for "${item.name}". Available: ${totalAvailable}, Requested: ${item.quantity}`
           )
         }
 
-        // Deduct quantity from inventory
-        await tx.inventoryItem.update({
-          where: { id: inventoryItem.id },
-          data: { quantity: { decrement: item.quantity } },
-        })
+        // Deduct from warehouses (prioritize the one with most stock first)
+        let remaining = item.quantity
+        for (const inventoryItem of inventoryItems) {
+          if (remaining <= 0) break
+          const deduct = Math.min(inventoryItem.quantity, remaining)
 
-        // Create inventory movement record
-        await tx.inventoryMovement.create({
-          data: {
-            inventoryItemId: inventoryItem.id,
-            type: 'out',
-            quantity: item.quantity,
-            reference: transactionNumber,
-            notes: `POS sale - ${paymentMethod}`,
-          },
-        })
+          await tx.inventoryItem.update({
+            where: { id: inventoryItem.id },
+            data: { quantity: { decrement: deduct } },
+          })
+
+          // Create inventory movement record
+          await tx.inventoryMovement.create({
+            data: {
+              inventoryItemId: inventoryItem.id,
+              type: 'out',
+              quantity: deduct,
+              reference: transactionNumber,
+              notes: `POS sale - ${paymentMethod} (from ${inventoryItem.warehouse.name})`,
+            },
+          })
+
+          remaining -= deduct
+        }
       }
 
       // Create the POS transaction
@@ -165,7 +160,7 @@ export async function POST(request: Request) {
     if (
       error instanceof Error &&
       (error.message.includes('Insufficient stock') ||
-        error.message.includes('not found in Main Vault'))
+        error.message.includes('not found in'))
     ) {
       return NextResponse.json(
         { error: error.message },

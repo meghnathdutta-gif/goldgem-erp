@@ -479,12 +479,12 @@ export function AiInsightsModule() {
                     // Hide confidence band entries from legend
                     if (value.endsWith('_upper') || value.endsWith('_lower')) return null
                     const config = dynamicChartConfig[value]
+                    const matchedForecast = demandForecasts.find((pf) => pf.productName === value)
+                    const modelLabel = matchedForecast?.forecasts?.[0]?.model
                     return (
                       <span className="text-xs text-muted-foreground">
                         {config?.label ?? value}
-                        {demandForecasts.find((pf) => pf.productName === value)?.forecasts[0]
-                          ? ` (${demandForecasts.find((pf) => pf.productName === value)!.forecasts[0].model})`
-                          : ''}
+                        {modelLabel ? ` (${modelLabel})` : ''}
                       </span>
                     )
                   }}

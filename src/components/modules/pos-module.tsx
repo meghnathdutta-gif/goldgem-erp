@@ -374,7 +374,7 @@ export function PosModule() {
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const tax = Math.round(subtotal * TAX_RATE)
-  const discountAmount = Math.max(0, parseFloat(discount) || 0)
+  const discountAmount = Math.min(Math.max(0, parseFloat(discount) || 0), subtotal + tax)
   const total = Math.max(0, subtotal + tax - discountAmount)
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -419,23 +419,25 @@ export function PosModule() {
   }, [stockMap, cartQuantityMap])
 
   const updateQuantity = useCallback((productId: string, delta: number) => {
+    const availableStock = getStockForProduct(productId, stockMap)
+    const currentItem = cart.find((item) => item.productId === productId)
+    if (!currentItem) return
+    const newQty = currentItem.quantity + delta
+    if (newQty < 1) return
+    if (newQty > availableStock) {
+      toast.error('Insufficient stock', {
+        description: `Only ${availableStock} unit${availableStock !== 1 ? 's' : ''} available.`,
+      })
+      return
+    }
     setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.productId !== productId) return item
-          const newQty = item.quantity + delta
-          const availableStock = getStockForProduct(productId, stockMap)
-          if (newQty < 1) return item
-          if (newQty > availableStock) {
-            toast.error('Insufficient stock', {
-              description: `Only ${availableStock} unit${availableStock !== 1 ? 's' : ''} available.`,
-            })
-            return item
-          }
-          return { ...item, quantity: newQty }
-        })
+      prev.map((item) =>
+        item.productId === productId
+          ? { ...item, quantity: newQty }
+          : item
+      )
     )
-  }, [stockMap])
+  }, [stockMap, cart])
 
   const removeFromCart = useCallback((productId: string) => {
     setCart((prev) => prev.filter((item) => item.productId !== productId))
