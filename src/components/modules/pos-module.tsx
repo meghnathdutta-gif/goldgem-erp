@@ -814,12 +814,12 @@ export function PosModule() {
             onClick={() => setMobileCartOpen(false)}
           />
           {/* Bottom Sheet */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden max-h-[60vh] rounded-t-2xl bg-background shadow-2xl border-t overflow-hidden animate-in slide-in-from-bottom duration-200">
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden max-h-[80vh] rounded-t-2xl bg-background shadow-2xl border-t overflow-hidden animate-in slide-in-from-bottom duration-200">
             {/* Drag handle */}
             <div className="flex justify-center pt-2 pb-1">
               <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
             </div>
-            <div className="overflow-y-auto max-h-[55vh] px-4 pb-4">
+            <div className="overflow-y-auto max-h-[75vh] px-4 pb-6">
               <Card className="py-0 border-0 shadow-none">
                 {/* Cart Header */}
                 <CardHeader className="p-3 pb-2">
@@ -846,11 +846,11 @@ export function PosModule() {
                     <div className="py-8 text-center">
                       <ShoppingBag className="mx-auto h-10 w-10 text-muted-foreground/30" />
                       <p className="mt-2 text-sm text-muted-foreground">Your cart is empty</p>
-                      <p className="text-xs text-muted-foreground mt-1">Click a product to add it</p>
+                      <p className="text-xs text-muted-foreground mt-1">Tap a product to add it</p>
                     </div>
                   ) : (
                     <>
-                      <div className="max-h-32 overflow-y-auto space-y-0 pr-1 scrollbar-thin">
+                      <div className="max-h-40 overflow-y-auto space-y-0 pr-1 scrollbar-thin">
                         {cart.map((item) => (
                           <CartItemRow
                             key={item.productId}
@@ -873,6 +873,20 @@ export function PosModule() {
                           <span className="text-muted-foreground">Tax (8%)</span>
                           <span className="tabular-nums">{formatCurrency(tax)}</span>
                         </div>
+                        <div className="flex items-center justify-between text-sm gap-2">
+                          <Label htmlFor="mobile-discount" className="text-muted-foreground shrink-0 cursor-pointer">
+                            Discount (₹)
+                          </Label>
+                          <Input
+                            id="mobile-discount"
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={discount}
+                            onChange={(e) => setDiscount(e.target.value)}
+                            className="h-8 w-24 text-right text-sm tabular-nums"
+                          />
+                        </div>
                         <Separator />
                         <div className="flex items-center justify-between">
                           <span className="text-base font-bold">Total</span>
@@ -882,8 +896,65 @@ export function PosModule() {
                         </div>
                       </div>
 
+                      <Separator className="my-2" />
+
+                      {/* Payment Method */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Payment</Label>
+                        <RadioGroup
+                          value={paymentMethod}
+                          onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
+                          className="grid grid-cols-3 gap-2"
+                        >
+                          <Label
+                            htmlFor="mobile-pay-cash"
+                            className={`flex flex-col items-center gap-1 rounded-lg border p-2.5 cursor-pointer transition-colors touch-manipulation ${
+                              paymentMethod === 'cash'
+                                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
+                                : 'hover:bg-accent'
+                            }`}
+                          >
+                            <RadioGroupItem value="cash" id="mobile-pay-cash" className="sr-only" />
+                            <Banknote className={`h-4 w-4 ${paymentMethod === 'cash' ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                            <span className={`text-xs font-medium ${paymentMethod === 'cash' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                              Cash
+                            </span>
+                          </Label>
+
+                          <Label
+                            htmlFor="mobile-pay-card"
+                            className={`flex flex-col items-center gap-1 rounded-lg border p-2.5 cursor-pointer transition-colors touch-manipulation ${
+                              paymentMethod === 'card'
+                                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
+                                : 'hover:bg-accent'
+                            }`}
+                          >
+                            <RadioGroupItem value="card" id="mobile-pay-card" className="sr-only" />
+                            <CreditCard className={`h-4 w-4 ${paymentMethod === 'card' ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                            <span className={`text-xs font-medium ${paymentMethod === 'card' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                              Card
+                            </span>
+                          </Label>
+
+                          <Label
+                            htmlFor="mobile-pay-digital"
+                            className={`flex flex-col items-center gap-1 rounded-lg border p-2.5 cursor-pointer transition-colors touch-manipulation ${
+                              paymentMethod === 'digital'
+                                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
+                                : 'hover:bg-accent'
+                            }`}
+                          >
+                            <RadioGroupItem value="digital" id="mobile-pay-digital" className="sr-only" />
+                            <Smartphone className={`h-4 w-4 ${paymentMethod === 'digital' ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                            <span className={`text-xs font-medium ${paymentMethod === 'digital' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                              Digital
+                            </span>
+                          </Label>
+                        </RadioGroup>
+                      </div>
+
                       <Button
-                        className="w-full mt-3 h-11 text-base font-semibold bg-amber-600 hover:bg-amber-700 text-white"
+                        className="w-full mt-3 h-12 text-base font-semibold bg-amber-600 hover:bg-amber-700 text-white touch-manipulation"
                         onClick={handleCompleteSale}
                         disabled={completeSale.isPending || cart.length === 0}
                       >
@@ -904,7 +975,7 @@ export function PosModule() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs text-muted-foreground"
+                          className="text-xs text-muted-foreground touch-manipulation"
                           onClick={clearCart}
                           disabled={cart.length === 0}
                         >

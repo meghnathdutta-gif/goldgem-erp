@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
@@ -6,6 +6,14 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "GoldGem ERP - Jewellery Business Management",
   description: "Complete ERP solution for the jewellery industry - Manage inventory, manufacturing, POS, ecommerce, and AI insights",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({

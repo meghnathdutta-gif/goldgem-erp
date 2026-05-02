@@ -119,7 +119,56 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Prevent iOS bounce scroll overshift */
+    overscroll-behavior: none;
+    /* Smooth font rendering on mobile */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* Safe area support for notched devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-bottom-more {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4rem);
+}
+
+/* Better touch targets on mobile */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  select,
+  summary {
+    min-height: 44px;
+  }
+
+  /* Make inputs easier to tap */
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Prevent text selection on interactive elements for mobile */
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Touch-manipulation for faster taps */
+.touch-manipulation {
+  touch-action: manipulation;
 }
 
 /* Custom scrollbar */
@@ -136,4 +185,25 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.55 0.05 35);
+}
+
+/* Mobile-specific: make dialog content scrollable and full-width */
+@media (max-width: 640px) {
+  [data-radix-popper-content-wrapper] {
+    max-width: 100vw !important;
+  }
+
+  /* Ensure dialogs take full width on mobile with proper padding */
+  [role="dialog"] {
+    width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem) !important;
+    max-height: 90vh !important;
+  }
+}
+
+/* Viewport meta fix for mobile - prevent zoom on input focus */
+@supports (height: 100dvh) {
+  .flex.h-screen {
+    height: 100dvh;
+  }
 }
