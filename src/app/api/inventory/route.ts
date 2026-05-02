@@ -6,14 +6,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const lowStock = searchParams.get('lowStock') === 'true'
 
-    const where: Record<string, unknown> = {}
-
-    if (lowStock) {
-      where.quantity = { lte: db.inventoryItem.fields.reorderPoint }
-    }
-
     const items = await db.inventoryItem.findMany({
-      where,
       include: {
         product: true,
         warehouse: true,
@@ -21,7 +14,13 @@ export async function GET(request: Request) {
       orderBy: { updatedAt: 'desc' },
     })
 
-    return NextResponse.json(items)
+    // Prisma does not support column-to-column comparisons,
+    // so filter lowStock in JavaScript
+    const result = lowStock
+      ? items.filter(item => item.quantity <= item.reorderPoint)
+      : items
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Inventory GET error:', error)
     return NextResponse.json(

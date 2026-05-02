@@ -12,7 +12,7 @@ interface ERPState {
 
 export const useERPStore = create<ERPState>((set) => ({
   activeModule: 'dashboard',
-  sidebarOpen: true,
+  sidebarOpen: false,
   setActiveModule: (module) => set({ activeModule: module }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),

@@ -576,7 +576,7 @@ export function DashboardModule() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
+                  <TableHead className="hidden sm:table-cell">SKU</TableHead>
                   <TableHead className="text-right">Qty</TableHead>
                   <TableHead className="text-right">Value</TableHead>
                 </TableRow>
@@ -592,7 +592,7 @@ export function DashboardModule() {
                   topProducts.map((product) => (
                     <TableRow key={product.sku}>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{product.sku}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground">{product.sku}</TableCell>
                       <TableCell className="text-right">{product.quantity.toLocaleString('en-US')}</TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(product.value)}</TableCell>
                     </TableRow>

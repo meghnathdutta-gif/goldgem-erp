@@ -560,7 +560,7 @@ export function PosModule() {
   return (
     <div className="space-y-4">
       {/* ─── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
             <Gem className="h-5 w-5 text-amber-700 dark:text-amber-400" />
@@ -573,7 +573,7 @@ export function PosModule() {
         {/* Mobile cart toggle */}
         <Button
           variant="outline"
-          className="lg:hidden relative"
+          className="lg:hidden relative w-fit"
           onClick={() => setMobileCartOpen(!mobileCartOpen)}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
@@ -630,11 +630,8 @@ export function PosModule() {
         </div>
 
         {/* ─── Right Panel: Cart & Checkout (40%) ──────────────────────── */}
-        <div
-          className={`lg:col-span-2 ${
-            mobileCartOpen ? 'block' : 'hidden lg:block'
-          }`}
-        >
+        {/* Desktop: inline side panel */}
+        <div className="lg:col-span-2 hidden lg:block">
           <Card className="py-0 sticky top-4">
             {/* Cart Header */}
             <CardHeader className="p-4 pb-2">
@@ -807,6 +804,122 @@ export function PosModule() {
           </Card>
         </div>
       </div>
+
+      {/* ─── Mobile Cart Bottom Sheet ────────────────────────────────────── */}
+      {mobileCartOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            onClick={() => setMobileCartOpen(false)}
+          />
+          {/* Bottom Sheet */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden max-h-[60vh] rounded-t-2xl bg-background shadow-2xl border-t overflow-hidden animate-in slide-in-from-bottom duration-200">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-2 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            <div className="overflow-y-auto max-h-[55vh] px-4 pb-4">
+              <Card className="py-0 border-0 shadow-none">
+                {/* Cart Header */}
+                <CardHeader className="p-3 pb-2">
+                  <CardTitle className="flex items-center justify-between text-base">
+                    <span className="flex items-center gap-2">
+                      <ShoppingCart className="h-4 w-4 text-amber-600" />
+                      Shopping Cart
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {cartItemCount > 0 && (
+                        <Badge className="bg-amber-500 text-white text-xs">
+                          {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'}
+                        </Badge>
+                      )}
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setMobileCartOpen(false)}>
+                        ✕
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="p-3 pt-0">
+                  {cart.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <ShoppingBag className="mx-auto h-10 w-10 text-muted-foreground/30" />
+                      <p className="mt-2 text-sm text-muted-foreground">Your cart is empty</p>
+                      <p className="text-xs text-muted-foreground mt-1">Click a product to add it</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="max-h-32 overflow-y-auto space-y-0 pr-1 scrollbar-thin">
+                        {cart.map((item) => (
+                          <CartItemRow
+                            key={item.productId}
+                            item={item}
+                            stock={getStockForProduct(item.productId, stockMap)}
+                            onUpdateQuantity={updateQuantity}
+                            onRemove={removeFromCart}
+                          />
+                        ))}
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span className="tabular-nums">{formatCurrency(subtotal)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Tax (8%)</span>
+                          <span className="tabular-nums">{formatCurrency(tax)}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-bold">Total</span>
+                          <span className="text-lg font-bold text-amber-700 dark:text-amber-400 tabular-nums">
+                            {formatCurrency(total)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        className="w-full mt-3 h-11 text-base font-semibold bg-amber-600 hover:bg-amber-700 text-white"
+                        onClick={handleCompleteSale}
+                        disabled={completeSale.isPending || cart.length === 0}
+                      >
+                        {completeSale.isPending ? (
+                          <span className="flex items-center gap-2">
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            Processing...
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5" />
+                            Complete Sale · {formatCurrency(total)}
+                          </span>
+                        )}
+                      </Button>
+
+                      <div className="flex justify-center mt-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-muted-foreground"
+                          onClick={clearCart}
+                          disabled={cart.length === 0}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Clear Cart
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

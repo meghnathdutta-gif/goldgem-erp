@@ -51,7 +51,7 @@ function Sidebar() {
     refetchInterval: 60000,
   })
 
-  const lowStockCount = inventoryData?.items?.length ?? 0
+  const lowStockCount = Array.isArray(inventoryData) ? inventoryData.length : 0
 
   // Auto-close sidebar on mobile when module changes
   useEffect(() => {
@@ -212,6 +212,44 @@ function MobileHeader() {
   )
 }
 
+function MobileBottomNav() {
+  const { activeModule, setActiveModule } = useERPStore()
+
+  const bottomNavItems: { id: Module; label: string; icon: React.ElementType }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'inventory', label: 'Inventory', icon: Package },
+    { id: 'pos', label: 'POS', icon: ShoppingCart },
+    { id: 'ecommerce', label: 'Store', icon: Globe },
+    { id: 'ai-insights', label: 'AI', icon: Brain },
+  ]
+
+  return (
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-background border-t border-border safe-area-bottom">
+      <div className="flex items-center justify-around h-14">
+        {bottomNavItems.map((item) => {
+          const Icon = item.icon
+          const isActive = activeModule === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveModule(item.id)}
+              className={cn(
+                'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors',
+                isActive
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className={cn('w-5 h-5', isActive && 'text-amber-700 dark:text-amber-400')} />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+
 export default function Home() {
   const { activeModule } = useERPStore()
 
@@ -220,9 +258,10 @@ export default function Home() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileHeader />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 pb-20 lg:pb-6">
           <ModuleContent module={activeModule} />
         </main>
+        <MobileBottomNav />
       </div>
     </div>
   )

@@ -412,7 +412,7 @@ export function AiInsightsModule() {
   return (
     <div className="space-y-6">
       {/* ─── Header with Generate Forecast Button ─────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
             <Brain className="h-5 w-5 text-amber-700 dark:text-amber-400" />

@@ -609,7 +609,7 @@ export function SupplyChainModule() {
 
   // ─── Loading State ──────────────────────────────────────────────────────
 
-  const isLoading = suppliersLoading && purchaseOrdersLoading && shipmentsLoading
+  const isLoading = suppliersLoading || purchaseOrdersLoading || shipmentsLoading
 
   if (isLoading) {
     return (

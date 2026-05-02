@@ -558,7 +558,7 @@ export function ManufacturingModule() {
 
   // ─── Loading State ──────────────────────────────────────────────────────
 
-  const isLoading = workOrdersLoading && bomLoading
+  const isLoading = workOrdersLoading || bomLoading
 
   if (isLoading) {
     return (
