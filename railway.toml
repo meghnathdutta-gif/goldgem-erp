@@ -1,0 +1,17 @@
+# ============================================
+# GoldGem ERP - Railway Configuration
+# Main Next.js web application service
+# ============================================
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Railway will automatically set PORT
+# Start command is handled by the Dockerfile CMD

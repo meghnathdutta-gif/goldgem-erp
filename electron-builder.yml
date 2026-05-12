@@ -1,0 +1,56 @@
+appId: com.goldgem.erp
+productName: Goldgem ERP
+copyright: Copyright 2026 Goldgem
+
+directories:
+  output: dist-electron
+  buildResources: electron
+
+files:
+  - .next/standalone/**/*
+  - electron/**/*
+  - package.json
+
+extraResources:
+  - from: db/goldgem-erp-seed.db
+    to: db/goldgem-erp-seed.db
+
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "**/*.dll"
+  - "**/*.so"
+  - ".next/standalone/node_modules/.prisma/**/*"
+
+# Skip native module rebuild for cross-compilation
+npmRebuild: false
+buildDependenciesFromSource: false
+forceCodeSigning: false
+
+win:
+  target:
+    - target: nsis
+      arch: x64
+  icon: electron/icon.png
+  requestedExecutionLevel: asInvoker
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Goldgem ERP
+  artifactName: Goldgem-ERP-Setup-${version}.${ext}
+  uninstallDisplayName: Goldgem ERP
+
+mac:
+  target:
+    - target: dmg
+      arch: x64
+  icon: electron/icon.png
+
+linux:
+  target:
+    - target: AppImage
+      arch: x64
+  icon: electron/icon.png
