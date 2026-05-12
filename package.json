@@ -13,6 +13,9 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
+    "db:seed:api": "curl -X POST http://localhost:3000/api/seed",
+    "schema:local": "cp prisma/schema.sqlite.prisma prisma/schema.prisma && npx prisma generate",
+    "schema:prod": "echo 'Schema is already set to PostgreSQL for Vercel'",
     "postinstall": "prisma generate"
   },
   "prisma": {
